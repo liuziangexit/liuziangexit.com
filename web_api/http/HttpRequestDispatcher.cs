@@ -1,19 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Net.Sockets;
 using System.Text;
 
-namespace WebApi
+namespace WebApi.Http
 {
     class HttpRequestDispatcher
     {
-        public void start()
-        {
-        }
-
-        public void stop()
+        public void Start()
         { }
 
-        private HttpListener listener;
+        public void Stop()
+        { }
+
+        private TcpListener ConnectionAcceptor;
+        public IDictionary<string, RouteHandler> RouteHandlers
+        {
+            get
+            {
+                if (mRouteHandlers == null)
+                    mRouteHandlers = new SortedDictionary<string, RouteHandler>();
+                return mRouteHandlers;
+            }
+        }
+
+        private SortedDictionary<string, RouteHandler> mRouteHandlers;
+
     }
 }

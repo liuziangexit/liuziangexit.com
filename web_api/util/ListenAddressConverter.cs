@@ -11,11 +11,11 @@ using Newtonsoft.Json;
  * 
  */
 
-public class ListenAddressConverter : JsonConverter<GameDbCache.ListenAddress>
+public class ListenAddressConverter : JsonConverter<WebApi.ListenAddress>
 {
-    public override GameDbCache.ListenAddress ReadJson(JsonReader reader, Type objectType, GameDbCache.ListenAddress existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override WebApi.ListenAddress ReadJson(JsonReader reader, Type objectType, WebApi.ListenAddress existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        var result = new GameDbCache.ListenAddress();
+        var result = new WebApi.ListenAddress();
         if (reader.TokenType != JsonToken.Null)
         {
             string tmp = reader.Value as string;
@@ -36,7 +36,7 @@ public class ListenAddressConverter : JsonConverter<GameDbCache.ListenAddress>
         return result;
     }
 
-    public override void WriteJson(JsonWriter writer, GameDbCache.ListenAddress value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, WebApi.ListenAddress value, JsonSerializer serializer)
     {
         throw new NotImplementedException();
     }

@@ -10,7 +10,7 @@ using Newtonsoft.Json;
  * 
  */
 
-namespace GameDbCache
+namespace WebApi
 {
     struct Config
     {
