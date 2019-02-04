@@ -39,7 +39,7 @@ namespace GameDbCache
 
         static public ConfigLoadingManager GetInstance() => Lazy.Value;
 
-        public Config GetConfig()
+        public WebApi.Config GetConfig()
         {
             RwLock.EnterReadLock();
             var returnMe = Config;
@@ -47,11 +47,11 @@ namespace GameDbCache
             return returnMe;
         }
 
-        private Config ReadConfig(JsonErrorHandler onError)
+        private WebApi.Config ReadConfig(JsonErrorHandler onError)
         {
             try
             {
-                return JsonConvert.DeserializeObject<Config>(File.ReadAllText(ConfigFileName), new JsonSerializerSettings
+                return JsonConvert.DeserializeObject<WebApi.Config>(File.ReadAllText(ConfigFileName), new JsonSerializerSettings
                 {
                     Error = onError
                 });
@@ -95,7 +95,7 @@ namespace GameDbCache
                 LogManager.GetInstance().LogAsync("致命错误-无法重新读取配置");
         }
 
-        private Config Config;
+        private WebApi.Config Config;
         private ReaderWriterLockSlim RwLock;
         private FileSystemWatcher FileWatcher;
 

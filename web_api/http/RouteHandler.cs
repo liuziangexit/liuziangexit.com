@@ -6,7 +6,7 @@ namespace WebApi.Http
 {
     class RouteHandler
     {
-        public Func<IEnumerable<string>, HttpResponse> OnGet;
-        public Func<IEnumerable<string>, string, HttpResponse> OnPost;
+        public delegate HttpResponse OnGet(IEnumerable<string> queryStringParams);
+        public delegate HttpResponse OnPost(IEnumerable<string> queryStringParams, string body);
     }
 }
