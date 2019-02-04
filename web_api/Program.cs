@@ -2,13 +2,13 @@
 using System;
 using System.Net;
 
-namespace src
+namespace WebApi
 {
     class Program
     {
         static void Main(string[] args)
         {
-            //ConfigLoadingManager.GetInstance();
+            var look = ConfigLoadingManager.GetInstance().GetConfig();
             //HttpServerHelper.start();
             var listener = new HttpListener();
             listener.Prefixes.Add("http://*/");

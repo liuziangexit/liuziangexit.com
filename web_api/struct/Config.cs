@@ -14,8 +14,11 @@ namespace GameDbCache
 {
     struct Config
     {
+        [JsonProperty("listen_address"), JsonConverter(typeof(ListenAddressConverter))]
+        public ListenAddress Address { get; set; }
+
         [JsonProperty("database")]
-        public DbConfig OutputServer { get; set; }
+        public DbConfig Database{ get; set; }
 
         [JsonProperty("worker_thread_count")]
         public int WorkerThreadCount { get; set; }
@@ -59,6 +62,12 @@ namespace GameDbCache
 
         [JsonProperty("sql_ssl_mode")]
         public SqlSslModeEnum SqlSslMode { get; set; }
+    }
+
+    public struct ListenAddress
+    {
+        public string ip { get; set; }
+        public UInt16 port { get; set; }
     }
 
     enum SqlSslModeEnum
