@@ -27,8 +27,8 @@ public class ListenAddressConverter : JsonConverter<WebApi.ListenAddress>
                     UInt16 parseResult = 0;
                     if (UInt16.TryParse(columns[1].Trim(), out parseResult))
                     {
-                        result.ip = columns[0].Trim();
-                        result.port = parseResult;
+                        result.IP = columns[0].Trim();
+                        result.Port = parseResult;
                     }
                 }
             }

@@ -1,6 +1,9 @@
 ﻿using GameDbCache;
 using System;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
+using WebApi.Http;
 
 namespace WebApi
 {
@@ -8,23 +11,22 @@ namespace WebApi
     {
         static void Main(string[] args)
         {
-            var look = ConfigLoadingManager.GetInstance().GetConfig();
-            //HttpServerHelper.start();
-            var listener = new HttpListener();
-            listener.Prefixes.Add("http://*/");
-            listener.Start();
-            var context = listener.GetContext();
-            HttpListenerResponse response = context.Response;
-            // Construct a response.
-            string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-            // Get a response stream and write the response to it.
-            response.ContentLength64 = buffer.Length;
-            System.IO.Stream output = response.OutputStream;
-            output.Write(buffer, 0, buffer.Length);
-            // You must close the output stream.
-            output.Close();
-            listener.Stop();
+            {
+                //test();
+            }
+            ConfigLoadingManager.GetInstance();
+            HttpRequestDispatcher dispatcher = new HttpRequestDispatcher();
+            dispatcher.Start();
+            Console.ReadKey();
+
+            dispatcher.Stop();
+            Console.ReadKey();
+        }
+
+        static async void test()
+        {
+            await Task.Delay(2000);
+            Console.Write("z");
         }
     }
 }

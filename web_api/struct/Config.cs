@@ -66,8 +66,11 @@ namespace WebApi
 
     public struct ListenAddress
     {
-        public string ip { get; set; }
-        public UInt16 port { get; set; }
+        [JsonProperty("ip")]
+        public string IP { get; set; }
+
+        [JsonProperty("port")]
+        public UInt16 Port { get; set; }
     }
 
     enum SqlSslModeEnum
