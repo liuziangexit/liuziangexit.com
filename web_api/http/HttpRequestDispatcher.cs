@@ -70,7 +70,7 @@ namespace WebApi.Http
             //ssl handshake
             try
             {
-                session.SslStream.AuthenticateAsServer(new X509Certificate(@"C:\Users\liuzi\Documents\GitHub\GameDbCache\certificate\server\server.pfx", ""), false, false);
+                session.SslStream.AuthenticateAsServer(new X509Certificate(@"/Users/liuziang/Documents/GitHub/GameDbCache/certificate/server/server-passwordis-password.pfx", "password"), false, false);
             }
             catch (Exception ex)
             {
@@ -97,7 +97,7 @@ namespace WebApi.Http
             if (bytesTransferred == 0)
                 return;
             string look = Encoding.ASCII.GetString(session.ReadBuffer, 0, bytesTransferred);
-            var writeMe = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\n\r\n\r\nhihihi\r\n\r\n");
+            var writeMe = Encoding.ASCII.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 6\r\n\r\nhihihi");
             session.SslStream.Write(writeMe, 0, writeMe.Length);
             //session.Client.Client.Disconnect(false);
             //session.Client.Close();

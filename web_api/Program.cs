@@ -17,10 +17,10 @@ namespace WebApi
             ConfigLoadingManager.GetInstance();
             HttpRequestDispatcher dispatcher = new HttpRequestDispatcher();
             dispatcher.Start();
-            Console.ReadKey();
+            Console.Read();
 
             dispatcher.Stop();
-            Console.ReadKey();
+            Console.Read();
         }
 
         static async void test()
