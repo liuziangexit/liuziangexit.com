@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading;
+using GameDbCache;
 using Newtonsoft.Json;
 using JsonErrorHandler = System.EventHandler<Newtonsoft.Json.Serialization.ErrorEventArgs>;
 
@@ -9,7 +10,7 @@ using JsonErrorHandler = System.EventHandler<Newtonsoft.Json.Serialization.Error
  * @contact liuziang@liuziangexit.com
  * @date    8/28/2018
  * 
- * ConfigManager
+ * ConfigLoadingManager
  *  
  * 功能：
  * -向所有模块提供线程安全的配置文件接口
@@ -17,7 +18,7 @@ using JsonErrorHandler = System.EventHandler<Newtonsoft.Json.Serialization.Error
  * 
  */
 
-namespace GameDbCache
+namespace WebApi.Core
 {
     class ConfigLoadingManager
     {
@@ -39,7 +40,7 @@ namespace GameDbCache
 
         static public ConfigLoadingManager GetInstance() => Lazy.Value;
 
-        public WebApi.Config GetConfig()
+        public WebApi.Struct.Config GetConfig()
         {
             RwLock.EnterReadLock();
             var returnMe = Config;
@@ -47,11 +48,11 @@ namespace GameDbCache
             return returnMe;
         }
 
-        private WebApi.Config ReadConfig(JsonErrorHandler onError)
+        private WebApi.Struct.Config ReadConfig(JsonErrorHandler onError)
         {
             try
             {
-                return JsonConvert.DeserializeObject<WebApi.Config>(File.ReadAllText(ConfigFileName), new JsonSerializerSettings
+                return JsonConvert.DeserializeObject<WebApi.Struct.Config>(File.ReadAllText(ConfigFileName), new JsonSerializerSettings
                 {
                     Error = onError
                 });
@@ -95,7 +96,7 @@ namespace GameDbCache
                 LogManager.GetInstance().LogAsync("致命错误-无法重新读取配置");
         }
 
-        private WebApi.Config Config;
+        private WebApi.Struct.Config Config;
         private ReaderWriterLockSlim RwLock;
         private FileSystemWatcher FileWatcher;
 

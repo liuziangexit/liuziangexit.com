@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using WebApi.Http.Handler;
 
 /** 
  * @author  liuziang
@@ -14,7 +15,7 @@ using System.Text;
  * 
  */
 
-namespace WebApi.Http
+namespace WebApi.Http.Struct
 {
     class Session
     {

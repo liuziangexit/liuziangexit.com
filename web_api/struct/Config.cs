@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using WebApi.Util;
 
 /** 
  * @author  liuziang
@@ -10,7 +11,7 @@ using Newtonsoft.Json;
  * 
  */
 
-namespace WebApi
+namespace WebApi.Struct
 {
     struct Config
     {
@@ -94,5 +95,4 @@ namespace WebApi
         VerifyCA,//要求使用SSL。如果服务器不支持SSL，则连接将会失败。如果签发服务器证书的CA不受信任或与提供的CA证书不匹配，则连接将会失败。允许服务器证书“Host不匹配”
         VerifyFull//要求使用SSL。如果服务器不支持SSL，则连接将会失败。如果签发服务器证书的CA不受信任或与提供的CA证书不匹配，则连接将会失败。如果服务器证书“Host不匹配”，则连接将会失败
     }
-
 }

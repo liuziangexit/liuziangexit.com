@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using WebApi.Http.Struct;
 
 /** 
  * @author  liuziang
@@ -13,7 +14,7 @@ using System.Text;
  * 
  */
 
-namespace WebApi.Http
+namespace WebApi.Http.Handler
 {
 
     delegate HttpResponse ProcessHttpRequest(HttpRequest r);

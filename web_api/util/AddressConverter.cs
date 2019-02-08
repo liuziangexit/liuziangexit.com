@@ -11,33 +11,37 @@ using Newtonsoft.Json;
  * 
  */
 
-public class AddressConverter : JsonConverter<WebApi.Address>
+namespace WebApi.Util
 {
-    public override WebApi.Address ReadJson(JsonReader reader, Type objectType, WebApi.Address existingValue, bool hasExistingValue, JsonSerializer serializer)
+
+    public class AddressConverter : JsonConverter<WebApi.Struct.Address>
     {
-        var result = new WebApi.Address();
-        if (reader.TokenType != JsonToken.Null)
+        public override WebApi.Struct.Address ReadJson(JsonReader reader, Type objectType, WebApi.Struct.Address existingValue, bool hasExistingValue, JsonSerializer serializer)
         {
-            string tmp = reader.Value as string;
-            if (tmp != null)
+            var result = new WebApi.Struct.Address();
+            if (reader.TokenType != JsonToken.Null)
             {
-                var columns = tmp.Split(':');
-                if (columns.Length == 2)
+                string tmp = reader.Value as string;
+                if (tmp != null)
                 {
-                    UInt16 parseResult = 0;
-                    if (UInt16.TryParse(columns[1].Trim(), out parseResult))
+                    var columns = tmp.Split(':');
+                    if (columns.Length == 2)
                     {
-                        result.IP = columns[0].Trim();
-                        result.Port = parseResult;
+                        UInt16 parseResult = 0;
+                        if (UInt16.TryParse(columns[1].Trim(), out parseResult))
+                        {
+                            result.IP = columns[0].Trim();
+                            result.Port = parseResult;
+                        }
                     }
                 }
             }
+            return result;
         }
-        return result;
-    }
 
-    public override void WriteJson(JsonWriter writer, WebApi.Address value, JsonSerializer serializer)
-    {
-        throw new NotImplementedException();
+        public override void WriteJson(JsonWriter writer, WebApi.Struct.Address value, JsonSerializer serializer)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -12,7 +12,7 @@ using System.Text;
  * 
  */
 
-namespace WebApi.Http
+namespace WebApi.Http.Struct
 {
     class HttpResponse
     {
