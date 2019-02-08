@@ -33,12 +33,7 @@ namespace WebApi.Http
 
         public byte[] SerializationToBytes()
         {
-            return SerializationToBytes(Encoding.UTF8);
-        }
-
-        public byte[] SerializationToBytes(Encoding encoding)
-        {
-            return encoding.GetBytes(SerializationToString());
+            return Encoding.UTF8.GetBytes(SerializationToString());
         }
 
         public UInt16 StatusCode;
