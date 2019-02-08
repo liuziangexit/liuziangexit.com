@@ -1,0 +1,10 @@
+language: csharp
+mono: none
+dotnet: 2.1.503
+script:
+ - cd web_api
+ - dotnet restore
+ - dotnet build
+notifications:
+  email:
+    - liuziangexit@gmail.com
