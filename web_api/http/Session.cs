@@ -9,9 +9,11 @@ namespace WebApi.Http
 {
     class Session
     {
+        public UInt64 SessionId;
         public TcpClient Client;
         public SslStream SslStream;
         public HttpParser HttpState;
+        public HttpRequestHandler HttpHandler;
         public byte[] ReadBuffer;
     }
 }

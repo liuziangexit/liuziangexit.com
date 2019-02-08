@@ -15,9 +15,9 @@ namespace WebApi.Http
             sb.Append(' ');
             sb.Append(((HttpStatusCode)StatusCode).ToString());
             sb.Append("\r\n");
-            if (mHeaders != null)
+            if (Headers != null)
             {
-                foreach(var p in mHeaders)
+                foreach(var p in Headers)
                 {
                     sb.Append(p.Key);
                     sb.Append(": ");
@@ -26,8 +26,9 @@ namespace WebApi.Http
                 }
             }
             sb.Append("\r\n");
+            // sb.EnsureCapacity(sb.Capacity+)
             sb.Append(Body);
-            return null;
+            return sb.ToString();
         }
 
         public byte[] SerializationToBytes()
@@ -41,18 +42,8 @@ namespace WebApi.Http
         }
 
         public UInt16 StatusCode;
-        public IDictionary<string, string> Headers
-        {
-            get
-            {
-                if (mHeaders == null)
-                    mHeaders = new SortedList<string, string>();
-                return mHeaders;
-            }
-        }
+        public SortedList<string, string> Headers;
         public string Body;
-
-        private SortedList<string, string> mHeaders;
     }
 }
 

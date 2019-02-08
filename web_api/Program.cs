@@ -11,9 +11,6 @@ namespace WebApi
     {
         static void Main(string[] args)
         {
-            {
-                //test();
-            }
             ConfigLoadingManager.GetInstance();
             HttpRequestDispatcher dispatcher = new HttpRequestDispatcher();
             dispatcher.Start();
@@ -21,12 +18,6 @@ namespace WebApi
 
             dispatcher.Stop();
             Console.Read();
-        }
-
-        static async void test()
-        {
-            await Task.Delay(2000);
-            Console.Write("z");
         }
     }
 }

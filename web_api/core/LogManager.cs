@@ -20,16 +20,36 @@ namespace GameDbCache
 {
     class LogManager
     {
-
-        static public LogManager GetInstance() => Lazy.Value;
-
-        public void LogAsync(string content)
+        LogManager()
         {
-            File.AppendAllTextAsync(ConfigLoadingManager.GetInstance().GetConfig().LogFile,
-               DateTime.Now.ToString() + Environment.NewLine + content + Environment.NewLine + Environment.NewLine,
-               Encoding.UTF8);
+            tp = new FixedThreadPool(1);
         }
 
+        static public LogManager GetInstance() => Lazy.Value;
+        
+        public void LogAsync(string content)
+        {
+            var now = DateTime.Now;
+            tp.Async(() =>
+            {
+                File.AppendAllText(ConfigLoadingManager.GetInstance().GetConfig().LogFile,
+                now.ToString() + Environment.NewLine + content + Environment.NewLine + Environment.NewLine,
+                Encoding.UTF8);
+            });
+        }
+
+        public void LogAsync(Exception ex)
+        {
+            var now = DateTime.Now;
+            tp.Async(() =>
+            {
+                File.AppendAllText(ConfigLoadingManager.GetInstance().GetConfig().LogFile,
+                now.ToString() + Environment.NewLine + ex.Message + Environment.NewLine + ex.StackTrace + Environment.NewLine + Environment.NewLine,
+                Encoding.UTF8);
+            });
+        }
+
+        private FixedThreadPool tp;
         private static readonly Lazy<LogManager> Lazy =
                 new Lazy<LogManager>(() => new LogManager());
     }
