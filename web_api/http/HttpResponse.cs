@@ -3,6 +3,15 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 
+/** 
+ * @author  liuziang
+ * @contact liuziang@liuziangexit.com
+ * @date    2/5/2019
+ * 
+ * HttpResponse
+ * 
+ */
+
 namespace WebApi.Http
 {
     class HttpResponse
@@ -17,7 +26,7 @@ namespace WebApi.Http
             sb.Append("\r\n");
             if (Headers != null)
             {
-                foreach(var p in Headers)
+                foreach (var p in Headers)
                 {
                     sb.Append(p.Key);
                     sb.Append(": ");
@@ -26,7 +35,7 @@ namespace WebApi.Http
                 }
             }
             sb.Append("\r\n");
-            // sb.EnsureCapacity(sb.Capacity+)
+            sb.EnsureCapacity(sb.Length + Body.Length);
             sb.Append(Body);
             return sb.ToString();
         }

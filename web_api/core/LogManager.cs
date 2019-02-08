@@ -26,7 +26,7 @@ namespace GameDbCache
         }
 
         static public LogManager GetInstance() => Lazy.Value;
-        
+
         public void LogAsync(string content)
         {
             var now = DateTime.Now;

@@ -4,6 +4,15 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 
+/** 
+ * @author  liuziang
+ * @contact liuziang@liuziangexit.com
+ * @date    2/9/2019
+ * 
+ * HttpRequestHandler, ProcessHttpRequest
+ * 
+ */
+
 namespace WebApi.Http
 {
 

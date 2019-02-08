@@ -1,6 +1,7 @@
 ﻿using GameDbCache;
 using HttpMachine;
 using System;
+using System.IO;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
@@ -28,29 +29,36 @@ namespace WebApi.Http
 
         //interface
 
-        public void Start()
+        public void Start(string ip, UInt16 port, uint readBufferSize, SortedDictionary<string, RouteHandler> routeHandlers)
+        {
+            this.Start(ip, port, readBufferSize, null, routeHandlers);
+        }
+
+        public void Start(string ip, UInt16 port, uint readBufferSize, X509Certificate certificate, SortedDictionary<string, RouteHandler> routeHandlers)
         {
             if (ConnectionAcceptor == null)
-            {
-                var config = ConfigLoadingManager.GetInstance().GetConfig();
-                ConnectionAcceptor = new TcpListener(IPAddress.Parse(config.Address.IP), config.Address.Port);
-            }
+                ConnectionAcceptor = new TcpListener(IPAddress.Parse(ip), port);
 
             if (Sessions == null)
                 Sessions = new ConcurrentDictionary<ulong, Session>();
 
+            this.ReadBufferSize = readBufferSize;
+            this.RouteHandlers = routeHandlers;
+            this.Certificate = certificate;
+
             ConnectionAcceptor.Start();
-            ConnectionAcceptor.BeginAcceptTcpClient(new AsyncCallback(HandleNewConnection), this.ConnectionAcceptor);
+            ConnectionAcceptor.BeginAcceptTcpClient(new AsyncCallback(OnAccept), this.ConnectionAcceptor);
         }
 
         public void Stop()
         {
             ConnectionAcceptor.Stop();
+            this.Sessions.Clear();
         }
 
         //implementation
 
-        private void HandleNewConnection(IAsyncResult ar)
+        private void OnAccept(IAsyncResult ar)
         {
             //accept tcp connection
             TcpListener acceptor = (TcpListener)ar.AsyncState;
@@ -58,7 +66,7 @@ namespace WebApi.Http
             try
             {
                 client = acceptor.EndAcceptTcpClient(ar);
-                acceptor.BeginAcceptTcpClient(new AsyncCallback(HandleNewConnection), acceptor);
+                acceptor.BeginAcceptTcpClient(new AsyncCallback(OnAccept), acceptor);
             }
             catch (SocketException ex)
             {
@@ -71,27 +79,38 @@ namespace WebApi.Http
             }
 
             //establish ssl connection
-            SslStream sslStream = null;
-            try
+            Stream stream;
+            if (this.Certificate != null)
             {
-                sslStream = new SslStream(client.GetStream());
-                sslStream.AuthenticateAsServer(new X509Certificate(@"C:\Users\liuzi\Documents\GitHub\GameDbCache\certificate\server\server.pfx", ""), false, false);
-            }
-            catch (Exception ex)
-            {
-                //ssl handshake failed, close tcp connection
-                client.Client.BeginDisconnect(false, (IAsyncResult disconnectAr) =>
+                SslStream sslStream = null;
+                try
                 {
-                    client.Close();
-                    sslStream.Close();
-                }, null);
-                LogManager.GetInstance().LogAsync(ex);
-                return;
+                    sslStream = new SslStream(client.GetStream());
+                    sslStream.AuthenticateAsServer(this.Certificate, false, false);
+                }
+                catch (Exception ex)
+                {
+                    //ssl handshake failed, close tcp connection
+                    client.Client.BeginDisconnect(false, (IAsyncResult disconnectAr) =>
+                    {
+                        client.Close();
+                        sslStream.Close();
+                    }, null);
+                    LogManager.GetInstance().LogAsync(ex);
+                    return;
+                }
+                //handshake successful
+                stream = sslStream;
+            }
+            else
+            {
+                stream = client.GetStream();
             }
 
             //keep objects reference
             Random random = new Random();
-            Func<UInt64> randomUInt64 = () => {
+            Func<UInt64> randomUInt64 = () =>
+            {
                 var buffer = new byte[sizeof(UInt64)];
                 random.NextBytes(buffer);
                 return BitConverter.ToUInt64(buffer, 0);
@@ -102,10 +121,10 @@ namespace WebApi.Http
             {
                 SessionId = randomUInt64(),
                 Client = client,
-                SslStream = sslStream,
+                Stream = stream,
                 HttpHandler = httpHandler,
                 HttpState = new HttpParser(httpHandler),
-                ReadBuffer = new byte[4096]
+                ReadBuffer = new byte[this.ReadBufferSize]
             };
             while (!this.Sessions.TryAdd(session.SessionId, session))
             {
@@ -114,7 +133,7 @@ namespace WebApi.Http
             }
 
             //post an async READ operation
-            session.SslStream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+            session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
         }
 
         private async void OnRead(IAsyncResult ar)
@@ -123,7 +142,7 @@ namespace WebApi.Http
             int bytesTransferred = 0;
             try
             {
-                bytesTransferred = session.SslStream.EndRead(ar);
+                bytesTransferred = session.Stream.EndRead(ar);
             }
             catch (Exception ex)
             {
@@ -149,18 +168,17 @@ namespace WebApi.Http
             while (session.HttpHandler.Responses.Count != 0)
             {
                 var response = session.HttpHandler.Responses.Dequeue();
-                string look = response.SerializationToString();
                 try
                 {
-                    await session.SslStream.WriteAsync(response.SerializationToBytes());
+                    await session.Stream.WriteAsync(response.SerializationToBytes());
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     LogManager.GetInstance().LogAsync(ex);
                 }
             }
 
-            session.SslStream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+            session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
         }
 
         void CloseSession(Session session)
@@ -171,12 +189,13 @@ namespace WebApi.Http
             session.Client.Client.BeginDisconnect(false, (IAsyncResult disconnectAr) =>
             {
                 session.Client.Close();
-                session.SslStream.Close();
+                session.Stream.Close();
             }, null);
         }
 
         HttpResponse ExecuteRouteHandler(HttpRequest r)
         {
+            //TODO: call route handler, implement timeout
             Console.Write("");
             return new HttpResponse
             {
@@ -186,7 +205,9 @@ namespace WebApi.Http
             };
         }
 
-        public SortedDictionary<string, RouteHandler> RouteHandlers;
+        private uint ReadBufferSize;
+        X509Certificate Certificate;
+        private SortedDictionary<string, RouteHandler> RouteHandlers;
         private TcpListener ConnectionAcceptor;
         private ConcurrentDictionary<UInt64, Session> Sessions;
 

@@ -6,7 +6,7 @@ using Newtonsoft.Json;
  * @contact liuziang@liuziangexit.com
  * @date    8/29/2018
  * 
- * Config
+ * Config, DbConfig, Address, SqlSslModeEnum
  * 
  */
 
@@ -14,17 +14,26 @@ namespace WebApi
 {
     struct Config
     {
-        [JsonProperty("listen_address"), JsonConverter(typeof(ListenAddressConverter))]
-        public ListenAddress Address { get; set; }
+        [JsonProperty("http_listen_address"), JsonConverter(typeof(AddressConverter))]
+        public Address HttpListenAddress { get; set; }
 
-        [JsonProperty("database")]
-        public DbConfig Database{ get; set; }
+        [JsonProperty("https_listen_address"), JsonConverter(typeof(AddressConverter))]
+        public Address HttpsListenAddress { get; set; }
 
-        [JsonProperty("worker_thread_count")]
-        public int WorkerThreadCount { get; set; }
+        [JsonProperty("https_pfx_certificate")]
+        public string HttpsPfxCertificate { get; set; }
+
+        [JsonProperty("https_pfx_certificate_password")]
+        public string HttpsPfxCertificatePassword { get; set; }
+
+        [JsonProperty("session_read_buffer_size")]
+        public uint SessionReadBufferSize { get; set; }
 
         [JsonProperty("log_file")]
         public string LogFile { get; set; }
+
+        [JsonProperty("database")]
+        public DbConfig Database { get; set; }
     }
 
     struct DbConfig
@@ -64,8 +73,14 @@ namespace WebApi
         public SqlSslModeEnum SqlSslMode { get; set; }
     }
 
-    public struct ListenAddress
+    public struct Address
     {
+
+        public bool isAvailable()
+        {
+            return IP != null && Port != 0;
+        }
+
         [JsonProperty("ip")]
         public string IP { get; set; }
 

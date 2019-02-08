@@ -1,6 +1,7 @@
 ﻿using GameDbCache;
 using System;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using WebApi.Http;
@@ -11,13 +12,34 @@ namespace WebApi
     {
         static void Main(string[] args)
         {
-            ConfigLoadingManager.GetInstance();
-            HttpRequestDispatcher dispatcher = new HttpRequestDispatcher();
-            dispatcher.Start();
-            Console.Read();
+            var config = ConfigLoadingManager.GetInstance().GetConfig();
 
-            dispatcher.Stop();
-            Console.Read();
+            HttpRequestDispatcher httpDispatcher = null;
+            HttpRequestDispatcher httpsDispatcher = null;
+
+            if (config.HttpListenAddress.isAvailable())
+            {
+                httpDispatcher = new HttpRequestDispatcher();
+                httpDispatcher.Start(config.HttpListenAddress.IP, config.HttpListenAddress.Port,
+                 config.SessionReadBufferSize, null);
+                Console.WriteLine("Http Server - " + Environment.NewLine + config.HttpListenAddress.IP + ":" + config.HttpListenAddress.Port);
+            }
+            if (config.HttpsListenAddress.isAvailable())
+            {
+                httpsDispatcher = new HttpRequestDispatcher();
+                httpsDispatcher.Start(config.HttpsListenAddress.IP, config.HttpsListenAddress.Port,
+                 config.SessionReadBufferSize, new X509Certificate(config.HttpsPfxCertificate, config.HttpsPfxCertificatePassword),
+                 null);
+                Console.WriteLine("Https Server - " + Environment.NewLine + config.HttpsListenAddress.IP + ":" + config.HttpsListenAddress.Port);
+            }
+            if (httpDispatcher == null && httpsDispatcher == null)
+                return;
+            Console.WriteLine("press any key to shut down...");
+            Console.ReadKey();
+            if (httpDispatcher != null)
+                httpDispatcher.Stop();
+            if (httpsDispatcher != null)
+                httpsDispatcher.Stop();
         }
     }
 }

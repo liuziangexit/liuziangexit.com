@@ -7,15 +7,15 @@ using Newtonsoft.Json;
  * @contact liuziang@liuziangexit.com
  * @date    2/4/2019
  * 
- * ListenAddressConverter
+ * AddressConverter
  * 
  */
 
-public class ListenAddressConverter : JsonConverter<WebApi.ListenAddress>
+public class AddressConverter : JsonConverter<WebApi.Address>
 {
-    public override WebApi.ListenAddress ReadJson(JsonReader reader, Type objectType, WebApi.ListenAddress existingValue, bool hasExistingValue, JsonSerializer serializer)
+    public override WebApi.Address ReadJson(JsonReader reader, Type objectType, WebApi.Address existingValue, bool hasExistingValue, JsonSerializer serializer)
     {
-        var result = new WebApi.ListenAddress();
+        var result = new WebApi.Address();
         if (reader.TokenType != JsonToken.Null)
         {
             string tmp = reader.Value as string;
@@ -36,7 +36,7 @@ public class ListenAddressConverter : JsonConverter<WebApi.ListenAddress>
         return result;
     }
 
-    public override void WriteJson(JsonWriter writer, WebApi.ListenAddress value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, WebApi.Address value, JsonSerializer serializer)
     {
         throw new NotImplementedException();
     }
