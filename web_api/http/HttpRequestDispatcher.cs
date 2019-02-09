@@ -247,13 +247,40 @@ namespace WebApi.Http
 
         HttpResponse ExecuteRouteHandler(HttpRequest r)
         {
-            //TODO: call route handler
-            return new HttpResponse
+            Func<HttpResponse, HttpResponse> addHeader = (HttpResponse response) =>
+             {
+                 if (response.Headers == null)
+                     response.Headers = new SortedList<string, string>();
+                 response.Headers["Content-Length"] = Utility.UTF8EncodedLength(response.Body).ToString();
+                 response.Headers["Connection"] = "keep-alive";
+                 response.Headers["Server"] = "liuziangWebServer/CSharp";
+                 response.Headers["Date"] = DateTime.Now.ToUniversalTime().ToString("r");
+                 response.Headers["Connection"] = "keep-alive";
+                 if (response.Headers.ContainsKey("Content-Type"))
+                     response.Headers["Content-Type"] += "; charset=utf-8";
+                 else
+                     response.Headers["Content-Type"] = "text/plain; charset=utf-8";
+                 return response;
+             };
+
+            if (r.Path.EndsWith('/'))
+                r.Path.Remove(r.Path.Length - 1);
+
+            RouteHandler handler = null;
+            if (RouteHandlers == null || !RouteHandlers.TryGetValue(r.Path, out handler))
+            {
+                return addHeader(new HttpResponse
+                {
+                    StatusCode = 404,
+                    Body = "naive，仔"
+                });
+            }
+
+            return addHeader(new HttpResponse
             {
                 StatusCode = 200,
-                Headers = new SortedList<string, string> { { "Server", "hihihi" }, { "Content-Length", "6" } },
-                Body = "naive!"
-            };
+                Body = "ok，仔"
+            });
         }
 
         private uint ReadBufferSize, Timeout;
