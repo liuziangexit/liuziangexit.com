@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using WebApi.Http.Handler;
 
 /** 
@@ -20,10 +21,17 @@ namespace WebApi.Http.Struct
     class Session
     {
         public UInt64 SessionId;
+        public byte[] ReadBuffer;
+
+        //connection
         public TcpClient Client;
         public Stream Stream;
+
+        //timeout handler
+        public Timer Timeout;
+
+        //http logic
         public HttpParser HttpState;
         public HttpRequestHandler HttpHandler;
-        public byte[] ReadBuffer;
     }
 }

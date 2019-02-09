@@ -50,6 +50,11 @@ namespace GameDbCache
             });
         }
 
+        public void Stop()
+        {
+            this.tp.Stop();
+        }
+
         private FixedThreadPool tp;
         private static readonly Lazy<LogManager> Lazy =
                 new Lazy<LogManager>(() => new LogManager());

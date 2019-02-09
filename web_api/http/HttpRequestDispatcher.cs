@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WebApi.Http.Struct;
 using WebApi.Http.Handler;
+using WebApi.Util;
 
 /** 
  * @author  liuziang
@@ -31,12 +32,12 @@ namespace WebApi.Http
 
         //interface
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, SortedDictionary<string, RouteHandler> routeHandlers)
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, SortedDictionary<string, RouteHandler> routeHandlers)
         {
-            this.Start(ip, port, readBufferSize, null, routeHandlers);
+            this.Start(ip, port, readBufferSize, timeout, null, routeHandlers);
         }
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, X509Certificate certificate, SortedDictionary<string, RouteHandler> routeHandlers)
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate certificate, SortedDictionary<string, RouteHandler> routeHandlers)
         {
             if (ConnectionAcceptor == null)
                 ConnectionAcceptor = new TcpListener(IPAddress.Parse(ip), port);
@@ -45,6 +46,7 @@ namespace WebApi.Http
                 Sessions = new ConcurrentDictionary<ulong, Session>();
 
             this.ReadBufferSize = readBufferSize;
+            this.Timeout = timeout;
             this.RouteHandlers = routeHandlers;
             this.Certificate = certificate;
 
@@ -55,7 +57,8 @@ namespace WebApi.Http
         public void Stop()
         {
             ConnectionAcceptor.Stop();
-            this.Sessions.Clear();
+            foreach (var session in this.Sessions.Values)
+                RaiseCloseSession(session);
         }
 
         //implementation
@@ -72,11 +75,12 @@ namespace WebApi.Http
             }
             catch (SocketException ex)
             {
-                LogManager.GetInstance().LogAsync(ex.Message + "\r\n" + ex.StackTrace);
+                LogManager.GetInstance().LogAsync(ex);
                 return;
             }
             catch (ObjectDisposedException)
             {
+                //acceptor closed
                 return;
             }
 
@@ -95,7 +99,6 @@ namespace WebApi.Http
                     //ssl handshake failed, close tcp connection
                     client.Client.BeginDisconnect(false, (IAsyncResult disconnectAr) =>
                     {
-                        client.Close();
                         sslStream.Close();
                     }, null);
                     LogManager.GetInstance().LogAsync(ex);
@@ -109,7 +112,7 @@ namespace WebApi.Http
                 stream = client.GetStream();
             }
 
-            //keep objects reference
+            //construct session object
             Random random = new Random();
             Func<UInt64> randomUInt64 = () =>
             {
@@ -122,20 +125,38 @@ namespace WebApi.Http
             Session session = new Session
             {
                 SessionId = randomUInt64(),
+                ReadBuffer = new byte[this.ReadBufferSize],
                 Client = client,
                 Stream = stream,
-                HttpHandler = httpHandler,
+                Timeout = null,
                 HttpState = new HttpParser(httpHandler),
-                ReadBuffer = new byte[this.ReadBufferSize]
+                HttpHandler = httpHandler
             };
+
+            session.Timeout = new Timer((object state) => RaiseCloseSession(session), null,
+                                         System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+
+            //keep session object reference
             while (!this.Sessions.TryAdd(session.SessionId, session))
             {
                 session.SessionId = randomUInt64();
                 Thread.Yield();
             }
 
+            //start timer
+            session.Timeout.Change(this.Timeout * 1000, System.Threading.Timeout.Infinite);
+
             //post an async READ operation
-            session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+            try
+            {
+                session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+            }
+            catch (Exception ex)
+            {
+                CloseSession(session);
+                LogManager.GetInstance().LogAsync(ex);
+                return;
+            }
         }
 
         private async void OnRead(IAsyncResult ar)
@@ -153,12 +174,15 @@ namespace WebApi.Http
 
             if (bytesTransferred == 0)
             {
-                //remote host shuts down the connection gracefully
+                //connection has been shuted down gracefully
                 //or...
                 //READ operation throws an Exception
                 CloseSession(session);
                 return;
             }
+
+            //pause timer
+            session.Timeout.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
 
             if (bytesTransferred != session.HttpState.Execute(new ArraySegment<byte>(session.ReadBuffer, 0, bytesTransferred)))
             {
@@ -180,25 +204,50 @@ namespace WebApi.Http
                 }
             }
 
-            session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+            //post an async READ operation
+            try
+            {
+                session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+            }
+            catch (Exception)
+            {
+                CloseSession(session);
+                return;
+            }
+
+            //start timer
+            session.Timeout.Change(this.Timeout * 1000, System.Threading.Timeout.Infinite);
         }
 
-        void CloseSession(Session session)
+        private void CloseSession(Session session)
         {
+            //stop timer
+            session.Timeout.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+
+            //remove from session pool
             Session uselessOutHolder = null;
             this.Sessions.TryRemove(session.SessionId, out uselessOutHolder);
 
+            //close connection and release un-managed resources
             session.Client.Client.BeginDisconnect(false, (IAsyncResult disconnectAr) =>
             {
-                session.Client.Close();
+                session.Timeout.Dispose();
                 session.Stream.Close();
             }, null);
         }
 
+        private void RaiseCloseSession(Session session)
+        {
+            //stop timer
+            session.Timeout.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
+
+            //close the underlying TCP connection
+            session.Client.Client.BeginDisconnect(false, (IAsyncResult ar) => { }, null);
+        }
+
         HttpResponse ExecuteRouteHandler(HttpRequest r)
         {
-            //TODO: call route handler, implement timeout
-            Console.Write("");
+            //TODO: call route handler
             return new HttpResponse
             {
                 StatusCode = 200,
@@ -207,7 +256,7 @@ namespace WebApi.Http
             };
         }
 
-        private uint ReadBufferSize;
+        private uint ReadBufferSize, Timeout;
         X509Certificate Certificate;
         private SortedDictionary<string, RouteHandler> RouteHandlers;
         private TcpListener ConnectionAcceptor;

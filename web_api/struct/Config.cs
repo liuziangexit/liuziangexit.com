@@ -30,6 +30,9 @@ namespace WebApi.Struct
         [JsonProperty("session_read_buffer_size")]
         public uint SessionReadBufferSize { get; set; }
 
+        [JsonProperty("session_no_action_timeout")]
+        public uint SessionNoActionTimeout { get; set; }
+
         [JsonProperty("log_file")]
         public string LogFile { get; set; }
 
