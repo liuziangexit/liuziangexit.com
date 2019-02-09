@@ -1,11 +1,12 @@
 ﻿using GameDbCache;
 using System;
-using System.Net;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
-using System.Threading;
-using System.Threading.Tasks;
 using WebApi.Core;
 using WebApi.Http;
+using WebApi.Http.Struct;
+using WebApi.Logic;
+using WebApi.Logic.Article;
 
 namespace WebApi
 {
@@ -15,6 +16,11 @@ namespace WebApi
         {
             var config = ConfigLoadingManager.GetInstance().GetConfig();
 
+            SortedDictionary<string, RouteHandler> routeHandlers = new SortedDictionary<string, RouteHandler>();
+            routeHandlers.Add("/article", new ArticleHandler());
+
+            ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers };
+
             HttpRequestDispatcher httpDispatcher = null;
             HttpRequestDispatcher httpsDispatcher = null;
 
@@ -23,7 +29,7 @@ namespace WebApi
                 httpDispatcher = new HttpRequestDispatcher();
                 httpDispatcher.Start(config.HttpListenAddress.IP, config.HttpListenAddress.Port,
                  config.SessionReadBufferSize, config.SessionNoActionTimeout,
-                 null);
+                 executeRouteHandler.HttpRequestHandler);
                 Console.WriteLine("Http Server - " + Environment.NewLine + config.HttpListenAddress.IP + ":" + config.HttpListenAddress.Port);
             }
             if (config.HttpsListenAddress.isAvailable())
@@ -32,7 +38,7 @@ namespace WebApi
                 httpsDispatcher.Start(config.HttpsListenAddress.IP, config.HttpsListenAddress.Port,
                  config.SessionReadBufferSize, config.SessionNoActionTimeout,
                   new X509Certificate(config.HttpsPfxCertificate, config.HttpsPfxCertificatePassword),
-                 null);
+                 executeRouteHandler.HttpRequestHandler);
                 Console.WriteLine("Https Server - " + Environment.NewLine + config.HttpsListenAddress.IP + ":" + config.HttpsListenAddress.Port);
             }
             if (httpDispatcher == null && httpsDispatcher == null)

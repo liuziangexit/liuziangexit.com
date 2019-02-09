@@ -3,18 +3,13 @@ using HttpMachine;
 using System;
 using System.IO;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using WebApi.Http.Struct;
 using WebApi.Http.Handler;
-using WebApi.Util;
 
 /** 
  * @author  liuziang
@@ -32,12 +27,14 @@ namespace WebApi.Http
 
         //interface
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, SortedDictionary<string, RouteHandler> routeHandlers)
+        public delegate HttpResponse HttpRequestProcessor(HttpRequest r);
+
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, HttpRequestProcessor httpRequestHandler)
         {
-            this.Start(ip, port, readBufferSize, timeout, null, routeHandlers);
+            this.Start(ip, port, readBufferSize, timeout, null, httpRequestHandler);
         }
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate certificate, SortedDictionary<string, RouteHandler> routeHandlers)
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate certificate, HttpRequestProcessor httpRequestHandler)
         {
             if (ConnectionAcceptor == null)
                 ConnectionAcceptor = new TcpListener(IPAddress.Parse(ip), port);
@@ -47,7 +44,7 @@ namespace WebApi.Http
 
             this.ReadBufferSize = readBufferSize;
             this.Timeout = timeout;
-            this.RouteHandlers = routeHandlers;
+            this.HttpRequestHandler = httpRequestHandler;
             this.Certificate = certificate;
 
             ConnectionAcceptor.Start();
@@ -121,7 +118,7 @@ namespace WebApi.Http
                 return BitConverter.ToUInt64(buffer, 0);
             };
 
-            var httpHandler = new HttpRequestHandler(new ProcessHttpRequest(ExecuteRouteHandler));
+            var httpHandler = new HttpRequestHandler(new HttpRequestProcessor(this.HttpRequestHandler));
             Session session = new Session
             {
                 SessionId = randomUInt64(),
@@ -223,11 +220,9 @@ namespace WebApi.Http
         {
             //stop timer
             session.Timeout.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
-
             //remove from session pool
             Session uselessOutHolder = null;
             this.Sessions.TryRemove(session.SessionId, out uselessOutHolder);
-
             //close connection and release un-managed resources
             session.Client.Client.BeginDisconnect(false, (IAsyncResult disconnectAr) =>
             {
@@ -240,52 +235,13 @@ namespace WebApi.Http
         {
             //stop timer
             session.Timeout.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
-
             //close the underlying TCP connection
             session.Client.Client.BeginDisconnect(false, (IAsyncResult ar) => { }, null);
         }
 
-        HttpResponse ExecuteRouteHandler(HttpRequest r)
-        {
-            Func<HttpResponse, HttpResponse> addHeader = (HttpResponse response) =>
-             {
-                 if (response.Headers == null)
-                     response.Headers = new SortedList<string, string>();
-                 response.Headers["Content-Length"] = Utility.UTF8EncodedLength(response.Body).ToString();
-                 response.Headers["Connection"] = "keep-alive";
-                 response.Headers["Server"] = "liuziangWebServer/CSharp";
-                 response.Headers["Date"] = DateTime.Now.ToUniversalTime().ToString("r");
-                 response.Headers["Connection"] = "keep-alive";
-                 if (response.Headers.ContainsKey("Content-Type"))
-                     response.Headers["Content-Type"] += "; charset=utf-8";
-                 else
-                     response.Headers["Content-Type"] = "text/plain; charset=utf-8";
-                 return response;
-             };
-
-            if (r.Path.EndsWith('/'))
-                r.Path.Remove(r.Path.Length - 1);
-
-            RouteHandler handler = null;
-            if (RouteHandlers == null || !RouteHandlers.TryGetValue(r.Path, out handler))
-            {
-                return addHeader(new HttpResponse
-                {
-                    StatusCode = 404,
-                    Body = "naive，仔"
-                });
-            }
-
-            return addHeader(new HttpResponse
-            {
-                StatusCode = 200,
-                Body = "ok，仔"
-            });
-        }
-
+        private HttpRequestProcessor HttpRequestHandler;
         private uint ReadBufferSize, Timeout;
-        X509Certificate Certificate;
-        private SortedDictionary<string, RouteHandler> RouteHandlers;
+        private X509Certificate Certificate;
         private TcpListener ConnectionAcceptor;
         private ConcurrentDictionary<UInt64, Session> Sessions;
 

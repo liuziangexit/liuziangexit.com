@@ -1115,9 +1115,9 @@ _again:
 
 			if (result != buf.Count)
 			{
-				Console.WriteLine("error on character " + p);
-				Console.WriteLine("('" + buf.Array[p] + "')");
-				Console.WriteLine("('" + (char)buf.Array[p] + "')");
+				//Console.WriteLine("error on character " + p);
+				//Console.WriteLine("('" + buf.Array[p] + "')");
+				//Console.WriteLine("('" + (char)buf.Array[p] + "')");
 			}
 
 			return p - buf.Offset;

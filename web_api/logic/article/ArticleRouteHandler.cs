@@ -1,8 +1,3 @@
-using HttpMachine;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
 using WebApi.Http.Struct;
 
 /** 
@@ -16,16 +11,16 @@ using WebApi.Http.Struct;
 
 namespace WebApi.Logic.Article
 {
-    class ArticleRouteHandler : RouteHandler
+    class ArticleHandler : RouteHandler
     {
-        public HttpResponse OnGet(IEnumerable<string> queryStringParams)
+        public HttpResponse OnGet(HttpRequest r)
         {
-            throw new NotImplementedException();
+            return new HttpResponse { StatusCode = 200, Body = "GET Article" };
         }
 
-        public HttpResponse OnPost(IEnumerable<string> queryStringParams, string body)
+        public HttpResponse OnPost(HttpRequest r)
         {
-            throw new NotImplementedException();
+            return new HttpResponse { StatusCode = 200, Body = "POST Article" };
         }
     }
 }

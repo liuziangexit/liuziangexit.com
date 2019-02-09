@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using WebApi.Http.Struct;
+using static WebApi.Http.HttpRequestDispatcher;
 
 /** 
  * @author  liuziang
@@ -16,13 +17,9 @@ using WebApi.Http.Struct;
 
 namespace WebApi.Http.Handler
 {
-
-    delegate HttpResponse ProcessHttpRequest(HttpRequest r);
-
     class HttpRequestHandler : IHttpRequestParserDelegate
     {
-
-        public HttpRequestHandler(ProcessHttpRequest processor)
+        public HttpRequestHandler(HttpRequestProcessor processor)
         {
             this.Processor = processor;
         }
@@ -90,8 +87,7 @@ namespace WebApi.Http.Handler
         public Queue<HttpResponse> Responses = new Queue<HttpResponse>();
 
         private HttpRequest Request;
-        private ProcessHttpRequest Processor;
+        private HttpRequestProcessor Processor;
         private string HeaderName;
-
     }
 }
