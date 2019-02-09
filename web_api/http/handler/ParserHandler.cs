@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text;
 using WebApi.Http.Struct;
 using static WebApi.Http.HttpRequestDispatcher;
+using System.Net;
 
 /** 
  * @author  liuziang
@@ -69,7 +70,7 @@ namespace WebApi.Http.Handler
             {
                 var secondRound = pair.Split('=');
                 if (secondRound.Length == 2)
-                    Request.QueryString.Add(secondRound[0], secondRound[1]);
+                    Request.QueryString.Add(secondRound[0], WebUtility.UrlDecode(secondRound[1]));
             }
         }
 

@@ -212,7 +212,7 @@ namespace WebApi.Http
                 return;
             }
 
-            //start timer
+            //restart timer
             session.Timeout.Change(this.Timeout * 1000, System.Threading.Timeout.Infinite);
         }
 

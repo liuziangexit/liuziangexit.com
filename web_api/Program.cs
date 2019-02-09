@@ -17,7 +17,7 @@ namespace WebApi
             var config = ConfigLoadingManager.GetInstance().GetConfig();
 
             SortedDictionary<string, RouteHandler> routeHandlers = new SortedDictionary<string, RouteHandler>();
-            routeHandlers.Add("/article", new ArticleHandler());
+            routeHandlers.Add("/article/latest", new ArticleHandler());
 
             ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers };
 
@@ -53,6 +53,7 @@ namespace WebApi
             if (httpsDispatcher != null)
                 httpsDispatcher.Stop();
 
+            LogManager.GetInstance().LogAsync("stopped");
             LogManager.GetInstance().Stop();
         }
     }
