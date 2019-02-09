@@ -12,7 +12,7 @@ using System.Net;
  * @contact liuziang@liuziangexit.com
  * @date    2/9/2019
  * 
- * HttpRequestHandler, ProcessHttpRequest
+ * HttpRequestHandler
  * 
  */
 

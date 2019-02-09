@@ -12,7 +12,7 @@ using WebApi.Logic.Article.Struct;
  * @contact liuziang@liuziangexit.com
  * @date    2/9/2019
  * 
- * ArticleRouteHandler
+ * ArticleHandler
  *
  * ----------------------------------
  * HTTP GET /article/latest

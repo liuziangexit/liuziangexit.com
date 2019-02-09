@@ -5,12 +5,19 @@ using System.Net.Http;
 using WebApi.Http.Struct;
 using WebApi.Util;
 
+/** 
+ * @author  liuziang
+ * @contact liuziang@liuziangexit.com
+ * @date    2/10/2019
+ * 
+ * ExecuteRouteHandler
+ * 
+ */
+
 namespace WebApi.Logic
 {
     class ExecuteRouteHandler
     {
-
-
         public HttpResponse HttpRequestHandler(HttpRequest r)
         {
             if (r.Method != HttpMethod.Get && r.Method != HttpMethod.Post)

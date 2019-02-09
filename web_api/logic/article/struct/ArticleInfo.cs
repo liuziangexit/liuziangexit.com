@@ -1,5 +1,14 @@
 using Newtonsoft.Json;
 
+/** 
+ * @author  liuziang
+ * @contact liuziang@liuziangexit.com
+ * @date    2/10/2019
+ * 
+ * ArticleInfo
+ * 
+ */
+
 namespace WebApi.Logic.Article.Struct
 {
     public class ArticleInfo

@@ -1,5 +1,14 @@
 using LinqToDB.Mapping;
 
+/** 
+ * @author  liuziang
+ * @contact liuziang@liuziangexit.com
+ * @date    2/10/2019
+ * 
+ * ArticleTable
+ * 
+ */
+
 namespace WebApi.Logic.Article.Struct
 {
     [Table(Name = "article")]
