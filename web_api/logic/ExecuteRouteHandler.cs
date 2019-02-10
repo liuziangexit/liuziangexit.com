@@ -29,7 +29,7 @@ namespace WebApi.Logic
                 });
 
             if (r.Path.EndsWith('/'))
-                r.Path.Remove(r.Path.Length - 1);
+                r.Path = r.Path.Remove(r.Path.Length - 1);
 
             RouteHandler handler = null;
             if (RouteHandlers == null || !RouteHandlers.TryGetValue(r.Path, out handler))
@@ -77,6 +77,7 @@ namespace WebApi.Logic
                 r.Headers["Content-Type"] += "; charset=utf-8";
             else
                 r.Headers["Content-Type"] = "text/plain; charset=utf-8";
+            r.Headers["Access-Control-Allow-Origin"] = "*";
             return r;
         }
 

@@ -61,7 +61,11 @@ namespace WebApi.Logic.Article
 
                 latestArticles = new List<ArticleInfo>(queryResult.Count());
                 foreach (var p in queryResult)
-                    latestArticles.Add(JsonConvert.DeserializeObject<ArticleInfo>(p.Info));
+                {
+                    var tmp = JsonConvert.DeserializeObject<ArticleInfo>(p.Info);
+                    tmp.Time = p.Time;
+                    latestArticles.Add(tmp);
+                }
             }
 
             return new HttpResponse
