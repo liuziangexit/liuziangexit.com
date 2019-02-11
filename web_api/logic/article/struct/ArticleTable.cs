@@ -19,7 +19,7 @@ namespace WebApi.Logic.Article.Struct
 
         //in seconds
         [Column(Name = "time"), NotNull]
-        public long Time { get; set; }
+        public ulong Time { get; set; }
 
         [Column(Name = "info"), NotNull]
         public string Info { get; set; }
