@@ -11,7 +11,6 @@ namespace WebApi.Http.Struct
 {
     interface RouteHandler
     {
-        HttpResponse OnGet(HttpRequest r);
-        HttpResponse OnPost(HttpRequest r);
+        HttpResponse OnRequest(HttpRequest r);
     }
 }

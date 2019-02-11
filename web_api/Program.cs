@@ -18,6 +18,7 @@ namespace WebApi
 
             SortedDictionary<string, RouteHandler> routeHandlers = new SortedDictionary<string, RouteHandler>();
             routeHandlers.Add("/article/latest", new ArticleHandler());
+            routeHandlers.Add("/article", new ArticleHandler());
 
             ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers };
 

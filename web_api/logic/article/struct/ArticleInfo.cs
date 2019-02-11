@@ -13,6 +13,9 @@ namespace WebApi.Logic.Article.Struct
 {
     public class ArticleInfo
     {
+        [JsonProperty("id")]
+        public uint Id;
+
         [JsonProperty("title")]
         public string Title;
 

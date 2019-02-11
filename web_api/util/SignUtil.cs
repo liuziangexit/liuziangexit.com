@@ -18,25 +18,25 @@ namespace WebApi.Util
     {
         static public byte[] Sign(byte[] data, X509Certificate2 certificateWithPrivateKey)
         {
-            RSACryptoServiceProvider csp = (RSACryptoServiceProvider)certificateWithPrivateKey.PrivateKey;
-            SHA1Managed sha256 = new SHA1Managed();
-            byte[] hash = sha256.ComputeHash(data);
-            return csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1"));
+            RSA csp = (RSA)certificateWithPrivateKey.PrivateKey;
+            SHA1Managed sha1 = new SHA1Managed();
+            byte[] hash = sha1.ComputeHash(data);
+            return csp.SignHash(hash, HashAlgorithmName.SHA1, RSASignaturePadding.Pkcs1);
         }
 
         static public bool Verify(byte[] data, byte[] signature, X509Certificate2 certificate)
         {
-            RSACryptoServiceProvider csp = (RSACryptoServiceProvider)certificate.PublicKey.Key;
-            SHA1Managed sha256 = new SHA1Managed();
-            byte[] hash = sha256.ComputeHash(data);
-            return csp.VerifyHash(hash, CryptoConfig.MapNameToOID("SHA1"), signature);
+            RSA csp = (RSA)certificate.PublicKey.Key;
+            SHA1Managed sha1 = new SHA1Managed();
+            byte[] hash = sha1.ComputeHash(data);
+            return csp.VerifyHash(hash, signature, HashAlgorithmName.SHA1, RSASignaturePadding.Pkcs1);
         }
 
         static public string Sign(string data, X509Certificate2 certificateWithPrivateKey)
         {
             byte[] dataAsBytes = Encoding.ASCII.GetBytes(data);
             byte[] signAsBytes = Sign(dataAsBytes, certificateWithPrivateKey);
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(signAsBytes.Length * 2);
             foreach (var b in signAsBytes)
                 sb.AppendFormat("{0:x2}", b);//as hex
             return sb.ToString();

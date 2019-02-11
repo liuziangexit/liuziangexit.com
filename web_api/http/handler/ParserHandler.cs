@@ -32,10 +32,30 @@ namespace WebApi.Http.Handler
 
         public void OnBody(HttpParser parser, ArraySegment<byte> data)
         {
-            if (Request.Headers.ContainsKey("Content-Encoding"))
-                Request.Body = Encoding.GetEncoding(Request.Headers["Content-Encoding"]).GetString(data.Array);
-            else
-                Request.Body = Encoding.UTF8.GetString(data.Array);
+            string body = null;
+            bool isUrlEncoded = false;
+            if (Request.Headers.ContainsKey("Content-Type"))
+            {
+                if (Request.Headers["Content-Type"].IndexOf("application/x-www-form-urlencoded") != -1)
+                    isUrlEncoded = true;
+                var charsetPos = Request.Headers["Content-Type"].IndexOf("charset=");
+                if (charsetPos != -1)
+                {
+                    var charsetName = Request.Headers["Content-Type"].Substring(
+                        charsetPos + "charset=".Length);
+                    body = Encoding.GetEncoding(charsetName).GetString(data.Array, data.Offset, data.Count);
+                }
+            }
+            if (body == null)
+                body = Encoding.UTF8.GetString(data.Array, data.Offset, data.Count);
+
+            if (isUrlEncoded)
+            {
+                OnQueryString(parser, body);
+                return;
+            }
+
+            Request.Body = body;
         }
 
         public void OnHeaderName(HttpParser parser, string name)
@@ -70,7 +90,7 @@ namespace WebApi.Http.Handler
             {
                 var secondRound = pair.Split('=');
                 if (secondRound.Length == 2)
-                    Request.QueryString.Add(secondRound[0], WebUtility.UrlDecode(secondRound[1]));
+                    Request.QueryString.Add(WebUtility.UrlDecode(secondRound[0]), WebUtility.UrlDecode(secondRound[1]));
             }
         }
 
