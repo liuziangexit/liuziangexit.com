@@ -99,7 +99,6 @@ namespace WebApi.Logic.Article
                             return HttpResponse.NotImplemented;
                         return GetLatest(r);
                     }
-                    break;
                 case "/article":
                     {
                         //验证用证书
@@ -113,7 +112,6 @@ namespace WebApi.Logic.Article
                             return DeleteArticle(r, verificationCertificate);
                         return HttpResponse.NotImplemented;
                     }
-                    break;
             }
             //never happen
             throw new Exception();
@@ -140,7 +138,7 @@ namespace WebApi.Logic.Article
                 {
                     var tmp = JsonConvert.DeserializeObject<ArticleInfo>(p.Info);
                     tmp.Id = p.Id;
-                    tmp.Time = p.Time;
+                    tmp.Time = (long)p.Time;
                     latestArticles.Add(tmp);
                 }
             }
@@ -186,7 +184,7 @@ namespace WebApi.Logic.Article
             var newDbElement = new ArticleTable
             {
                 Id = newArticle.Id,
-                Time = newArticle.Time,
+                Time = (ulong)newArticle.Time,
                 Info = JsonConvert.SerializeObject(newArticle)
             };
 
