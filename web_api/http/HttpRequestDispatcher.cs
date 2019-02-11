@@ -181,9 +181,19 @@ namespace WebApi.Http
             //pause timer
             session.Timeout.Change(System.Threading.Timeout.Infinite, System.Threading.Timeout.Infinite);
 
-            if (bytesTransferred != session.HttpState.Execute(new ArraySegment<byte>(session.ReadBuffer, 0, bytesTransferred)))
+            try
             {
-                //HTTP Parser error
+                if (bytesTransferred != session.HttpState.Execute(new ArraySegment<byte>(session.ReadBuffer, 0, bytesTransferred)))
+                {
+                    //HTTP Parser error
+                    CloseSession(session);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                //logic error
+                LogManager.GetInstance().LogAsync(ex);
                 CloseSession(session);
                 return;
             }
