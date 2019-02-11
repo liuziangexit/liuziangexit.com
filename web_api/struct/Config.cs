@@ -23,7 +23,7 @@ namespace WebApi.Struct
         [JsonProperty("https_listen_address"), JsonConverter(typeof(AddressConverter))]
         public Address HttpsListenAddress { get; set; }
 
-        //pfx证书路径，不要求包含私钥
+        //pfx证书路径，要求包含私钥
         [JsonProperty("https_pfx_certificate")]
         public string HttpsPfxCertificate { get; set; }
 
