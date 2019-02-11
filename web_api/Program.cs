@@ -37,7 +37,7 @@ namespace WebApi
                 httpsDispatcher = new HttpRequestDispatcher();
                 httpsDispatcher.Start(config.HttpsListenAddress.IP, config.HttpsListenAddress.Port,
                  config.SessionReadBufferSize, config.SessionNoActionTimeout,
-                  new X509Certificate(config.HttpsPfxCertificate, config.HttpsPfxCertificatePassword),
+                  new X509Certificate2(config.HttpsPfxCertificate, config.HttpsPfxCertificatePassword),
                  executeRouteHandler.HttpRequestHandler);
                 Console.WriteLine("Https Server - " + Environment.NewLine + config.HttpsListenAddress.IP + ":" + config.HttpsListenAddress.Port);
             }

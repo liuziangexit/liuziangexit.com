@@ -34,7 +34,7 @@ namespace WebApi.Http
             this.Start(ip, port, readBufferSize, timeout, null, httpRequestHandler);
         }
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate certificate, HttpRequestProcessor httpRequestHandler)
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate2 certificate, HttpRequestProcessor httpRequestHandler)
         {
             if (ConnectionAcceptor == null)
                 ConnectionAcceptor = new TcpListener(IPAddress.Parse(ip), port);
@@ -241,7 +241,7 @@ namespace WebApi.Http
 
         private HttpRequestProcessor HttpRequestHandler;
         private uint ReadBufferSize, Timeout;
-        private X509Certificate Certificate;
+        private X509Certificate2 Certificate;
         private TcpListener ConnectionAcceptor;
         private ConcurrentDictionary<UInt64, Session> Sessions;
 
