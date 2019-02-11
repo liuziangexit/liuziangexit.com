@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 using WebApi.Http.Struct;
 using WebApi.Util;
 
@@ -68,7 +69,7 @@ namespace WebApi.Logic
         {
             if (r.Headers == null)
                 r.Headers = new SortedList<string, string>();
-            r.Headers["Content-Length"] = Utility.UTF8EncodedLength(r.Body).ToString();
+            r.Headers["Content-Length"] = Encoding.UTF8.GetByteCount(r.Body).ToString();
             r.Headers["Connection"] = "keep-alive";
             r.Headers["Server"] = "liuziangWebServer/CSharp";
             r.Headers["Date"] = DateTime.Now.ToUniversalTime().ToString("r");
