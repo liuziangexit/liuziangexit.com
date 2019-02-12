@@ -42,7 +42,7 @@ namespace WebApi
             HttpRequestDispatcher httpDispatcher = null;
             HttpRequestDispatcher httpsDispatcher = null;
 
-            if (config.HttpListenAddress.isAvailable())
+            if (config.HttpListenAddress.IsAvailable())
             {
                 httpDispatcher = new HttpRequestDispatcher();
                 httpDispatcher.Start(config.HttpListenAddress.IP, config.HttpListenAddress.Port,
@@ -50,7 +50,7 @@ namespace WebApi
                  executeRouteHandler.HttpRequestHandler);
                 Console.WriteLine("Http Server - " + Environment.NewLine + config.HttpListenAddress.IP + ":" + config.HttpListenAddress.Port);
             }
-            if (config.HttpsListenAddress.isAvailable())
+            if (config.HttpsListenAddress.IsAvailable())
             {
                 httpsDispatcher = new HttpRequestDispatcher();
                 httpsDispatcher.Start(config.HttpsListenAddress.IP, config.HttpsListenAddress.Port,

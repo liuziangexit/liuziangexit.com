@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using WebApi.Http.Struct;
-using static WebApi.Http.HttpRequestDispatcher;
 using System.Net;
 
 /** 
@@ -20,28 +19,23 @@ namespace WebApi.Http.Handler
 {
     class HttpRequestHandler : IHttpRequestParserDelegate
     {
-        public HttpRequestHandler(HttpRequestProcessor processor)
-        {
-            this.Processor = processor;
-        }
-
         public void OnMessageBegin(HttpParser parser)
         {
-            Request = new HttpRequest();
+            CurrentRequest = new HttpRequest();
         }
 
         public void OnBody(HttpParser parser, ArraySegment<byte> data)
         {
             string body = null;
             bool isUrlEncoded = false;
-            if (Request.Headers.ContainsKey("Content-Type"))
+            if (CurrentRequest.Headers.ContainsKey("Content-Type"))
             {
-                if (Request.Headers["Content-Type"].IndexOf("application/x-www-form-urlencoded") != -1)
+                if (CurrentRequest.Headers["Content-Type"].IndexOf("application/x-www-form-urlencoded") != -1)
                     isUrlEncoded = true;
-                var charsetPos = Request.Headers["Content-Type"].IndexOf("charset=");
+                var charsetPos = CurrentRequest.Headers["Content-Type"].IndexOf("charset=");
                 if (charsetPos != -1)
                 {
-                    var charsetName = Request.Headers["Content-Type"].Substring(
+                    var charsetName = CurrentRequest.Headers["Content-Type"].Substring(
                         charsetPos + "charset=".Length);
                     body = Encoding.GetEncoding(charsetName).GetString(data.Array, data.Offset, data.Count);
                 }
@@ -55,7 +49,7 @@ namespace WebApi.Http.Handler
                 return;
             }
 
-            Request.Body = body;
+            CurrentRequest.Body = body;
         }
 
         public void OnHeaderName(HttpParser parser, string name)
@@ -65,38 +59,38 @@ namespace WebApi.Http.Handler
 
         public void OnHeaderValue(HttpParser parser, string value)
         {
-            if (Request.Headers == null)
-                Request.Headers = new SortedList<string, string>();
-            Request.Headers.Add(this.HeaderName, value);
+            if (CurrentRequest.Headers == null)
+                CurrentRequest.Headers = new SortedList<string, string>();
+            CurrentRequest.Headers[this.HeaderName] = value;
         }
 
         public void OnMethod(HttpParser parser, string method)
         {
-            Request.Method = new HttpMethod(method);
+            CurrentRequest.Method = new HttpMethod(method);
         }
 
         public void OnPath(HttpParser parser, string path)
         {
-            Request.Path = path;
+            CurrentRequest.Path = path;
         }
 
         public void OnQueryString(HttpParser parser, string queryString)
         {
-            if (Request.QueryString == null)
-                Request.QueryString = new SortedList<string, string>();
+            if (CurrentRequest.QueryString == null)
+                CurrentRequest.QueryString = new SortedList<string, string>();
 
             var firstRound = queryString.Split('&');
             foreach (var pair in firstRound)
             {
                 var secondRound = pair.Split('=');
                 if (secondRound.Length == 2)
-                    Request.QueryString.Add(WebUtility.UrlDecode(secondRound[0]), WebUtility.UrlDecode(secondRound[1]));
+                    CurrentRequest.QueryString[WebUtility.UrlDecode(secondRound[0])] = WebUtility.UrlDecode(secondRound[1]);
             }
         }
 
         public void OnMessageEnd(HttpParser parser)
         {
-            Responses.Enqueue(this.Processor(this.Request));
+            Requests.Enqueue(CurrentRequest);
         }
 
         public void OnRequestUri(HttpParser parser, string requestUri) { }
@@ -105,10 +99,9 @@ namespace WebApi.Http.Handler
 
         public void OnHeadersEnd(HttpParser parser) { }
 
-        public Queue<HttpResponse> Responses = new Queue<HttpResponse>();
+        public Queue<HttpRequest> Requests;
 
-        private HttpRequest Request;
-        private HttpRequestProcessor Processor;
+        private HttpRequest CurrentRequest;
         private string HeaderName;
     }
 }

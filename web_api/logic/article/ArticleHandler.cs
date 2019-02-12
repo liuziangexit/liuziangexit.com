@@ -33,10 +33,23 @@ using System.Data;
  * 200 JsonArray<WebApi.Logic.Article.Struct.ArticleInfo>
  *
  * ----------------------------------
+ * HTTP GET /article
+ * 获取文章信息
+ *
+ * QueryString: 
+ * id(整形，必需)
+ *
+ * Return:
+ * 200 WebApi.Logic.Article.Struct.ArticleInfo
+ * 400 BadRequest
+ * 404 NotFound
+ *
+ * ----------------------------------
  * HTTP POST /article
  * 发布新文章(需验证)
  *
  * QueryString: 
+ * action(应为"new"，字符串，必须)
  * id(整形，必须)
  * title(字符串，必须)
  * image(字符串，必须)
@@ -56,6 +69,7 @@ using System.Data;
  * 修改文章(需验证)
  *
  * QueryString: 
+ * action(应为"replace"，字符串，必须)
  * id(整形，必须)
  * title(字符串，必须)
  * image(字符串，必须)
@@ -71,10 +85,11 @@ using System.Data;
  * 408 时间戳超出范围
  *
  * ----------------------------------
- * HTTP DELETE /article
+ * HTTP POST /article
  * 删除文章(需验证)
  *
  * QueryString: 
+ * action(应为"delete"，字符串，必须)
  * id(整形，必须)
  *
  * Return:
@@ -101,21 +116,36 @@ namespace WebApi.Logic.Article
                     }
                 case "/article":
                     {
-                        //验证用证书
-                        var verificationCertificate = new X509Certificate2(ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificate,
-                                    ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificatePassword);
+                        if (r.Method == HttpMethod.Get)
+                            return GetSingle(r);
+
                         if (r.Method == HttpMethod.Post)
-                            return NewArticleAsync(r, verificationCertificate);
-                        if (r.Method == HttpMethod.Put)
-                            return ReplaceArticle(r, verificationCertificate);
-                        if (r.Method == HttpMethod.Delete)
-                            return DeleteArticle(r, verificationCertificate);
+                        {
+                            var verificationCertificate = new X509Certificate2(ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificate,
+                                                                ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificatePassword);
+                            string action;
+                            if (!r.QueryString.TryGetValue("action", out action))
+                                return HttpResponse.BadRequest;
+                            switch (action)
+                            {
+                                case "new":
+                                    return NewOrReplaceArticle(r, verificationCertificate, false);
+                                case "replace":
+                                    return NewOrReplaceArticle(r, verificationCertificate, true);
+                                case "delete":
+                                    return DeleteArticle(r, verificationCertificate);
+                            }
+                            return HttpResponse.NotImplemented;
+                        }
+
                         return HttpResponse.NotImplemented;
                     }
             }
             //never happen
             throw new Exception();
         }
+
+        //↓
 
         private HttpResponse GetLatest(HttpRequest r)
         {
@@ -151,7 +181,38 @@ namespace WebApi.Logic.Article
             };
         }
 
-        private HttpResponse NewArticleAsync(HttpRequest r, X509Certificate2 c)
+        private HttpResponse GetSingle(HttpRequest r)
+        {
+            if (r.QueryString == null && !r.QueryString.ContainsKey("id"))
+                return HttpResponse.BadRequest;
+
+            uint findMe = uint.Parse(r.QueryString["id"]);
+
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+                ConfigLoadingManager.GetInstance()
+                .GetConfig().Database.GetConnectionString()))
+            {
+                var query = from p in db.GetTable<ArticleTable>()
+                            where p.Id == findMe
+                            select p;
+                if (query.Count() == 0)
+                    return HttpResponse.NotFound;
+
+                var result = query.First();
+                var article = JsonConvert.DeserializeObject<ArticleInfo>(result.Info);
+                article.Id = result.Id;
+                article.Time = (long)result.Time;
+
+                return new HttpResponse
+                {
+                    StatusCode = 200,
+                    Body = JsonConvert.SerializeObject(article, Formatting.Indented),
+                    Headers = new SortedList<string, string> { { "Content-Type", "application/json" } }
+                };
+            }
+        }
+
+        private HttpResponse NewOrReplaceArticle(HttpRequest r, X509Certificate2 c, bool isReplace)
         {
             switch (VerifyRequest(r, c))
             {
@@ -199,10 +260,13 @@ namespace WebApi.Logic.Article
                     var query = (from p in db.GetTable<ArticleTable>()
                                  where p.Id == newDbElement.Id
                                  select p);
-                    if (query.Count() != 0)
+                    var isExists = query.Count() != 0;
+                    if (!isReplace && isExists)
+                        return HttpResponse.Forbidden;
+                    if (isReplace && !isExists)
                         return HttpResponse.Forbidden;
 
-                    db.Insert(newDbElement);
+                    db.InsertOrReplace(newDbElement);
                 }
                 finally
                 {
@@ -213,15 +277,30 @@ namespace WebApi.Logic.Article
             return HttpResponse.Ok;
         }
 
-        private HttpResponse ReplaceArticle(HttpRequest r, X509Certificate2 c)
-        {
-            return null;
-        }
-
         private HttpResponse DeleteArticle(HttpRequest r, X509Certificate2 c)
         {
-            return null;
+            switch (VerifyRequest(r, c))
+            {
+                case Reasons.BadSignature: return HttpResponse.Unauthorized;
+                case Reasons.BadTime: return HttpResponse.RequestTimeout;
+                case Reasons.HeaderMissing: return HttpResponse.Unauthorized;
+            }
+
+            if (!r.QueryString.ContainsKey("id"))
+                return HttpResponse.BadRequest;
+
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+                ConfigLoadingManager.GetInstance()
+                .GetConfig().Database.GetConnectionString()))
+            {
+                if (db.Delete(new ArticleTable { Id = uint.Parse(r.QueryString["id"]) }) == 0)
+                    return HttpResponse.Forbidden;
+            }
+
+            return HttpResponse.Ok;
         }
+
+        //身份验证↓
 
         private Reasons VerifyRequest(HttpRequest r, X509Certificate2 c)
         {

@@ -102,7 +102,7 @@ namespace WebApi.Struct
     public struct Address
     {
 
-        public bool isAvailable()
+        public bool IsAvailable()
         {
             return IP != null && Port != 0;
         }

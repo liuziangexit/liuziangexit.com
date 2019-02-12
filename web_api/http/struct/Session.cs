@@ -3,9 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using WebApi.Http.Handler;
 
 /** 
  * @author  liuziang
@@ -32,6 +30,6 @@ namespace WebApi.Http.Struct
 
         //http logic
         public HttpParser HttpState;
-        public HttpRequestHandler HttpHandler;
+        public Queue<HttpRequest> Requests;
     }
 }

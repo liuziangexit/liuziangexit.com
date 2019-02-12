@@ -52,7 +52,6 @@ namespace WebApi.Logic
             r.Headers["Connection"] = "keep-alive";
             r.Headers["Server"] = "liuziangWebServer/CSharp";
             r.Headers["Date"] = DateTime.Now.ToUniversalTime().ToString("r");
-            r.Headers["Connection"] = "keep-alive";
             if (r.Headers.ContainsKey("Content-Type"))
                 r.Headers["Content-Type"] += "; charset=utf-8";
             else
