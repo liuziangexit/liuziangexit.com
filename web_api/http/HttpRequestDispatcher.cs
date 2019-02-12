@@ -140,13 +140,12 @@ namespace WebApi.Http
                 Thread.Yield();
             }
 
-            //start timer
-            session.Timeout.Change(this.Timeout * 1000, System.Threading.Timeout.Infinite);
-
             //post an async READ operation
             try
             {
                 session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+                //start timer
+                session.Timeout.Change(this.Timeout * 1000, System.Threading.Timeout.Infinite);
             }
             catch (Exception ex)
             {
@@ -215,15 +214,14 @@ namespace WebApi.Http
             try
             {
                 session.Stream.BeginRead(session.ReadBuffer, 0, session.ReadBuffer.Length, OnRead, session);
+                //restart timer
+                session.Timeout.Change(this.Timeout * 1000, System.Threading.Timeout.Infinite);
             }
             catch (Exception)
             {
                 CloseSession(session);
                 return;
             }
-
-            //restart timer
-            session.Timeout.Change(this.Timeout * 1000, System.Threading.Timeout.Infinite);
         }
 
         private void CloseSession(Session session)

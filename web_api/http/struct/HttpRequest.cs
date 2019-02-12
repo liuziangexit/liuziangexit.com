@@ -25,7 +25,7 @@ namespace WebApi.Http.Struct
             if (QueryString != null && QueryString.Count != 0)
             {
                 sb.Append('?');
-                sb.Append(QueryStringBuilder.createQueryStringFromMap(QueryString).ToString());
+                sb.Append(QueryStringBuilder.CreateQueryStringFromMap(QueryString).ToString());
             }
             sb.Append(' ');
             sb.Append("HTTP/1.1");

@@ -14,6 +14,23 @@ namespace WebApi
     {
         static void Main(string[] args)
         {
+            while (true)
+            {
+                try
+                {
+                    RunServer();
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message + Environment.NewLine + ex.StackTrace);
+                    LogManager.GetInstance().LogAsync(ex);
+                }
+            }
+        }
+
+        static void RunServer()
+        {
             var config = ConfigLoadingManager.GetInstance().GetConfig();
 
             SortedDictionary<string, RouteHandler> routeHandlers = new SortedDictionary<string, RouteHandler>();

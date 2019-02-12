@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Text;
+
 /** 
 * @author  liuziang
 * @contact liuziang@liuziangexit.com
@@ -10,6 +11,7 @@ using System.Text;
 * QueryString构造器
 * 
 */
+
 namespace WebApi.Http
 {
     class QueryStringBuilder
@@ -22,7 +24,7 @@ namespace WebApi.Http
          * @exception IllegalArgumentException 当map不合法时
          * @exception UnsupportedCharsetException 当字符编码不受支持时
          */
-        static public QueryStringBuilder createQueryStringFromMap(IDictionary<string, string> map)
+        static public QueryStringBuilder CreateQueryStringFromMap(IDictionary<string, string> map)
         {
             if (map == null || map.Count == 0)
                 throw new ArgumentException();
@@ -31,7 +33,7 @@ namespace WebApi.Http
             QueryStringBuilder builder = new QueryStringBuilder();
             foreach (var kv in map)
             {
-                builder.addParam(kv.Key, kv.Value, isFirst);
+                builder.AddParam(kv.Key, kv.Value, isFirst);
                 isFirst = false;
             }
             return builder;
@@ -42,10 +44,10 @@ namespace WebApi.Http
          * @exception IllegalArgumentException 当name为null或空时
          * @exception UnsupportedCharsetException 当字符编码不受支持时
          */
-        static public QueryStringBuilder createQueryString(String name, String value)
+        static public QueryStringBuilder CreateQueryString(String name, String value)
         {
             QueryStringBuilder builder = new QueryStringBuilder();
-            return builder.addParam(name, value, true);
+            return builder.AddParam(name, value, true);
         }
 
         /**
@@ -53,9 +55,9 @@ namespace WebApi.Http
          * @exception IllegalArgumentException 当name为null或空时
          * @exception UnsupportedCharsetException 当字符编码不受支持时
          */
-        public QueryStringBuilder addParam(String name, String value)
+        public QueryStringBuilder AddParam(String name, String value)
         {
-            return addParam(name, value, false);
+            return AddParam(name, value, false);
         }
 
         /**
@@ -70,7 +72,7 @@ namespace WebApi.Http
 
         private QueryStringBuilder() { }
 
-        private QueryStringBuilder addParam(String name, String value, bool isFirst)
+        private QueryStringBuilder AddParam(String name, String value, bool isFirst)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException("name can not be null or empty");

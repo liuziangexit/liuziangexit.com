@@ -1,9 +1,5 @@
-using GameDbCache;
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
-using System.Text;
 using WebApi.Http.Struct;
 using WebApi.Util;
 
