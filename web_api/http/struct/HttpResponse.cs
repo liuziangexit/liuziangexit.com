@@ -49,55 +49,109 @@ namespace WebApi.Http.Struct
         public SortedList<string, string> Headers;
         public string Body;
 
-        static readonly public HttpResponse Ok = new HttpResponse
+        static public HttpResponse Ok
         {
-            StatusCode = 200,
-            Body = "<html><title>OK</title><body><center><h1>200 Ok</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 200,
+                    Body = "<html><title>OK</title><body><center><h1>200 Ok</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
 
-        static readonly public HttpResponse BadRequest = new HttpResponse
+        static public HttpResponse BadRequest
         {
-            StatusCode = 400,
-            Body = "<html><title>BAD REQUEST</title><body><center><h1>400 Bad Request</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
-        static readonly public HttpResponse Unauthorized = new HttpResponse
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 400,
+                    Body = "<html><title>BAD REQUEST</title><body><center><h1>400 Bad Request</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
+
+        static public HttpResponse Unauthorized
         {
-            StatusCode = 401,
-            Body = "<html><title>UNAUTHORIZED</title><body><center><h1>401 Unauthorized</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
-        static readonly public HttpResponse Forbidden = new HttpResponse
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 401,
+                    Body = "<html><title>UNAUTHORIZED</title><body><center><h1>401 Unauthorized</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
+
+        static public HttpResponse Forbidden
         {
-            StatusCode = 403,
-            Body = "<html><title>FORBIDDEN</title><body><center><h1>403 Forbidden</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
-        static readonly public HttpResponse NotFound = new HttpResponse
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 403,
+                    Body = "<html><title>FORBIDDEN</title><body><center><h1>403 Forbidden</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
+
+        static public HttpResponse NotFound
         {
-            StatusCode = 404,
-            Body = "<html><title>NOT FOUND</title><body><center><h1>404 Not Found</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
-        static readonly public HttpResponse RequestTimeout = new HttpResponse
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 404,
+                    Body = "<html><title>NOT FOUND</title><body><center><h1>404 Not Found</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
+
+        static public HttpResponse RequestTimeout
         {
-            StatusCode = 408,
-            Body = "<html><title>REQUEST TIMEOUT</title><body><center><h1>408 Request Timeout</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
-        static readonly public HttpResponse InternalServerError = new HttpResponse
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 408,
+                    Body = "<html><title>REQUEST TIMEOUT</title><body><center><h1>408 Request Timeout</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
+
+        static public HttpResponse InternalServerError
         {
-            StatusCode = 500,
-            Body = "<html><title>INTERNAL SERVER ERROR</title><body><center><h1>500 Internal Server Error</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
-        static readonly public HttpResponse NotImplemented = new HttpResponse
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 500,
+                    Body = "<html><title>INTERNAL SERVER ERROR</title><body><center><h1>500 Internal Server Error</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
+
+        static public HttpResponse NotImplemented
         {
-            StatusCode = 501,
-            Body = "<html><title>NOT IMPLEMENTED</title><body><center><h1>501 Not Implemented</h1></center></body></html>",
-            Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
-        };
+            get
+            {
+                return new HttpResponse
+                {
+                    StatusCode = 501,
+                    Body = "<html><title>NOT IMPLEMENTED</title><body><center><h1>501 Not Implemented</h1></center></body></html>",
+                    Headers = new SortedList<string, string> { { "Content-Type", "text/html" } }
+                };
+            }
+        }
     }
 }
 

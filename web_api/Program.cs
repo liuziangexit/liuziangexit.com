@@ -47,7 +47,7 @@ namespace WebApi
                 httpDispatcher = new HttpRequestDispatcher();
                 httpDispatcher.Start(config.HttpListenAddress.IP, config.HttpListenAddress.Port,
                  config.SessionReadBufferSize, config.SessionNoActionTimeout,
-                 executeRouteHandler.HttpRequestHandler);
+                 executeRouteHandler.HttpRequestHandler, executeRouteHandler.InternalServerError);
                 Console.WriteLine("Http Server - " + Environment.NewLine + config.HttpListenAddress.IP + ":" + config.HttpListenAddress.Port);
             }
             if (config.HttpsListenAddress.IsAvailable())
@@ -56,7 +56,7 @@ namespace WebApi
                 httpsDispatcher.Start(config.HttpsListenAddress.IP, config.HttpsListenAddress.Port,
                  config.SessionReadBufferSize, config.SessionNoActionTimeout,
                   new X509Certificate2(config.HttpsPfxCertificate, config.HttpsPfxCertificatePassword),
-                 executeRouteHandler.HttpRequestHandler);
+                 executeRouteHandler.HttpRequestHandler, executeRouteHandler.InternalServerError);
                 Console.WriteLine("Https Server - " + Environment.NewLine + config.HttpsListenAddress.IP + ":" + config.HttpsListenAddress.Port);
             }
             if (httpDispatcher == null && httpsDispatcher == null)

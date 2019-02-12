@@ -30,12 +30,14 @@ namespace WebApi.Http
 
         public delegate HttpResponse HttpRequestProcessor(HttpRequest r);
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, HttpRequestProcessor httpRequestHandler)
+        public delegate HttpResponse ResponseMaker();
+
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, HttpRequestProcessor httpRequestHandler, ResponseMaker internalServerError)
         {
-            this.Start(ip, port, readBufferSize, timeout, null, httpRequestHandler);
+            this.Start(ip, port, readBufferSize, timeout, null, httpRequestHandler, internalServerError);
         }
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate2 certificate, HttpRequestProcessor httpRequestHandler)
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate2 certificate, HttpRequestProcessor httpRequestHandler, ResponseMaker internalServerError)
         {
             if (ConnectionAcceptor == null)
                 ConnectionAcceptor = new TcpListener(IPAddress.Parse(ip), port);
@@ -46,6 +48,7 @@ namespace WebApi.Http
             this.ReadBufferSize = readBufferSize;
             this.Timeout = timeout;
             this.HttpRequestHandler = httpRequestHandler;
+            this.GetInternalServerError = internalServerError;
             this.Certificate = certificate;
 
             ConnectionAcceptor.Start();
@@ -210,7 +213,7 @@ namespace WebApi.Http
                 catch (Exception ex)
                 {
                     //logic error
-                    responses.Enqueue(HttpResponse.InternalServerError);
+                    responses.Enqueue(GetInternalServerError());
                     LogManager.GetInstance().LogAsync(ex);
                 }
             }
@@ -257,6 +260,7 @@ namespace WebApi.Http
         }
 
         private HttpRequestProcessor HttpRequestHandler;
+        private ResponseMaker GetInternalServerError;
         private uint ReadBufferSize, Timeout;
         private X509Certificate2 Certificate;
         private TcpListener ConnectionAcceptor;

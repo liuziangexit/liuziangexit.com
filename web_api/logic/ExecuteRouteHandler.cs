@@ -42,6 +42,11 @@ namespace WebApi.Logic
             return AddHeader(responseProducedByLogicHandler);
         }
 
+        public HttpResponse InternalServerError()
+        {
+            return AddHeader(HttpResponse.InternalServerError);
+        }
+
         //------------------------------------------------------------------
 
         static private HttpResponse AddHeader(HttpResponse r)
