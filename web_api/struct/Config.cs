@@ -67,14 +67,14 @@ namespace WebApi.Struct
         public string GetConnectionString()
         {
             if (SqlSslMode == SqlSslModeEnum.None)
-                return "server=" + IP + ";port=" + Port.ToString() + ";uid=" + Username + ";pwd=" + Password + ";database=" + Database + ";";
+                return "server=" + IP + ";port=" + Port.ToString() + ";uid=" + Username + ";pwd=" + Password + ";database=" + Database + ";charset=utf8;";
 
             string sslModeString = null;
             if (SqlSslMode == SqlSslModeEnum.VerifyCA)
                 sslModeString = "VerifyCA";
             if (SqlSslMode == SqlSslModeEnum.VerifyFull)
                 sslModeString = "VerifyFull";
-            return "server=" + IP + ";port=" + Port.ToString() + ";uid=" + Username + ";pwd=" + Password + ";database=" + Database + ";" + "sslmode=" + sslModeString + ";CACertificateFile=" + SqlCaCertificate + ";";
+            return "server=" + IP + ";port=" + Port.ToString() + ";uid=" + Username + ";pwd=" + Password + ";database=" + Database + ";" + "sslmode=" + sslModeString + ";CACertificateFile=" + SqlCaCertificate + ";charset=utf8;";
         }
 
         [JsonProperty("ip")]
