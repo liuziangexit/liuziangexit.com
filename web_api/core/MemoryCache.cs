@@ -24,9 +24,9 @@ namespace WebApi.Core
 
         public bool Add(KeyType key, ValueType value)
         {
-            if (!this.innerMap.TryAdd(key, value))
+            if (!this.Memory.TryAdd(key, value))
                 return false;
-            this.asyncRunner.Async(() =>
+            this.AsyncRunner.Async(() =>
                 addToSource(key, value));
             return true;
         }
@@ -34,9 +34,9 @@ namespace WebApi.Core
         public bool Remove(KeyType key)
         {
             ValueType removedValue;
-            if (!this.innerMap.TryRemove(key, out removedValue))
+            if (!this.Memory.TryRemove(key, out removedValue))
                 return false;
-            this.asyncRunner.Async(() =>
+            this.AsyncRunner.Async(() =>
                 removeFromSource(key));
             return true;
         }
@@ -51,11 +51,11 @@ namespace WebApi.Core
 
         public bool TryGetValue(KeyType key, out ValueType value)
         {
-            if (!this.innerMap.TryGetValue(key, out value))
+            if (!this.Memory.TryGetValue(key, out value))
             {
                 var valueFromSource = getFromSource(key);
                 if (valueFromSource != null)
-                    this.innerMap.AddOrUpdate(key, valueFromSource,
+                    this.Memory.AddOrUpdate(key, valueFromSource,
                     (KeyType arg0, ValueType arg1) => valueFromSource);
                 value = valueFromSource;
             }
@@ -65,14 +65,19 @@ namespace WebApi.Core
         public bool Update(KeyType key, ValueType newValue)
         {
             ValueType currentValue = null;
-            if (!this.innerMap.TryGetValue(key, out currentValue))
+            if (!this.Memory.TryGetValue(key, out currentValue))
                 return false;
-            while (!this.innerMap.TryUpdate(key, newValue, currentValue))
-                if (!this.innerMap.TryGetValue(key, out currentValue))
+            while (!this.Memory.TryUpdate(key, newValue, currentValue))
+                if (!this.Memory.TryGetValue(key, out currentValue))
                     return false;
-            this.asyncRunner.Async(() =>
+            this.AsyncRunner.Async(() =>
                 updateToSource(key, newValue));
             return true;
+        }
+
+        public void Stop()
+        {
+            this.AsyncRunner.Stop();
         }
 
         public delegate void AddToSource(KeyType key, ValueType value);
@@ -87,8 +92,8 @@ namespace WebApi.Core
 
         //implementation
 
-        private ConcurrentDictionary<KeyType, ValueType> innerMap = new ConcurrentDictionary<KeyType, ValueType>();
-        private FixedThreadPool asyncRunner = new FixedThreadPool(1);
+        public ConcurrentDictionary<KeyType, ValueType> Memory = new ConcurrentDictionary<KeyType, ValueType>();
+        private FixedThreadPool AsyncRunner = new FixedThreadPool(1);
 
     }
 }

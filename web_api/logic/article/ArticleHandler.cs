@@ -64,7 +64,7 @@ using System.Data;
  * 408 时间戳超出范围
  *
  * ----------------------------------
- * HTTP PUT /article
+ * HTTP POST /article
  * 修改文章(需验证)
  *
  * QueryString: 
@@ -103,6 +103,11 @@ namespace WebApi.Logic.Article
 {
     class ArticleHandler : RouteHandler
     {
+        static public ArticleHandler GetInstance()
+        {
+            return ArticleHandler.Lazy.Value;
+        }
+
         public HttpResponse OnRequest(HttpRequest r)
         {
             switch (r.Path)
@@ -144,7 +149,18 @@ namespace WebApi.Logic.Article
             throw new Exception();
         }
 
+        public void Stop()
+        {
+            this.ArticleCache.Stop();
+            WriteMemoryToDb();
+        }
+
         //↓
+
+        private ArticleHandler()
+        {
+            this.LoadAllToCache();
+        }
 
         private HttpResponse GetLatest(HttpRequest r)
         {
@@ -152,30 +168,20 @@ namespace WebApi.Logic.Article
             if (r.QueryString != null && r.QueryString.ContainsKey("fetchCount"))
                 uint.TryParse(r.QueryString["fetchCount"], out fetchCount);
 
-            List<ArticleInfo> latestArticles = null;
-            using (DataConnection db = MySqlTools.CreateDataConnection(
-                ConfigLoadingManager.GetInstance()
-                .GetConfig().Database.GetConnectionString()))
-            {
-                var query = from p in db.GetTable<ArticleTable>()
-                            orderby p.Time descending
-                            select p;
-                var queryResult = query.Take((int)fetchCount);
+            var query = from p in ArticleCache.Memory
+                        orderby p.Value.Time descending
+                        select p.Value;
 
-                latestArticles = new List<ArticleInfo>(queryResult.Count());
-                foreach (var p in queryResult)
-                {
-                    var tmp = JsonConvert.DeserializeObject<ArticleInfo>(p.Info);
-                    tmp.Id = p.Id;
-                    tmp.Time = (long)p.Time;
-                    latestArticles.Add(tmp);
-                }
-            }
+            IEnumerable<ArticleInfo> queryResult;
+            if (fetchCount != 0)
+                queryResult = query.Take((int)fetchCount);
+            else
+                queryResult = query;
 
             return new HttpResponse
             {
                 StatusCode = 200,
-                Body = JsonConvert.SerializeObject(latestArticles, Formatting.Indented),
+                Body = JsonConvert.SerializeObject(queryResult, Formatting.Indented),
                 Headers = new SortedList<string, string> { { "Content-Type", "application/json" } }
             };
         }
@@ -186,29 +192,16 @@ namespace WebApi.Logic.Article
                 return HttpResponse.BadRequest;
 
             uint findMe = uint.Parse(r.QueryString["id"]);
+            ArticleInfo result = null;
+            if (!ArticleCache.Memory.TryGetValue(findMe, out result))
+                return HttpResponse.NotFound;
 
-            using (DataConnection db = MySqlTools.CreateDataConnection(
-                ConfigLoadingManager.GetInstance()
-                .GetConfig().Database.GetConnectionString()))
+            return new HttpResponse
             {
-                var query = from p in db.GetTable<ArticleTable>()
-                            where p.Id == findMe
-                            select p;
-                if (query.Count() == 0)
-                    return HttpResponse.NotFound;
-
-                var result = query.First();
-                var article = JsonConvert.DeserializeObject<ArticleInfo>(result.Info);
-                article.Id = result.Id;
-                article.Time = (long)result.Time;
-
-                return new HttpResponse
-                {
-                    StatusCode = 200,
-                    Body = JsonConvert.SerializeObject(article, Formatting.Indented),
-                    Headers = new SortedList<string, string> { { "Content-Type", "application/json" } }
-                };
-            }
+                StatusCode = 200,
+                Body = JsonConvert.SerializeObject(result, Formatting.Indented),
+                Headers = new SortedList<string, string> { { "Content-Type", "application/json" } }
+            };
         }
 
         private HttpResponse NewOrReplaceArticle(HttpRequest r, X509Certificate2 c, bool isReplace)
@@ -241,36 +234,22 @@ namespace WebApi.Logic.Article
                 Intro = r.QueryString["intro"],
                 Link = r.QueryString["link"]
             };
-            var newDbElement = new ArticleTable
+
+            var isExists = ArticleCache.Memory.ContainsKey(newArticle.Id);
+            if (!isReplace && isExists)
+                return HttpResponse.Forbidden;
+            if (isReplace && !isExists)
+                return HttpResponse.Forbidden;
+
+            if (isReplace)
             {
-                Id = newArticle.Id,
-                Time = (ulong)newArticle.Time,
-                Info = JsonConvert.SerializeObject(newArticle)
-            };
-
-            using (DataConnection db = MySqlTools.CreateDataConnection(
-            ConfigLoadingManager.GetInstance()
-            .GetConfig().Database.GetConnectionString()))
+                if (!ArticleCache.Update(newArticle.Id, newArticle))
+                    return HttpResponse.Forbidden;
+            }
+            else
             {
-                try
-                {
-                    db.BeginTransaction(IsolationLevel.Serializable);
-
-                    var query = (from p in db.GetTable<ArticleTable>()
-                                 where p.Id == newDbElement.Id
-                                 select p);
-                    var isExists = query.Count() != 0;
-                    if (!isReplace && isExists)
-                        return HttpResponse.Forbidden;
-                    if (isReplace && !isExists)
-                        return HttpResponse.Forbidden;
-
-                    db.InsertOrReplace(newDbElement);
-                }
-                finally
-                {
-                    db.CommitTransaction();
-                }
+                if (!ArticleCache.Add(newArticle.Id, newArticle))
+                    return HttpResponse.Forbidden;
             }
 
             return HttpResponse.Ok;
@@ -288,15 +267,9 @@ namespace WebApi.Logic.Article
             if (!r.QueryString.ContainsKey("id"))
                 return HttpResponse.BadRequest;
 
-            using (DataConnection db = MySqlTools.CreateDataConnection(
-                ConfigLoadingManager.GetInstance()
-                .GetConfig().Database.GetConnectionString()))
-            {
-                if (db.Delete(new ArticleTable { Id = uint.Parse(r.QueryString["id"]) }) == 0)
-                    return HttpResponse.Forbidden;
-            }
-
-            return HttpResponse.Ok;
+            if (ArticleCache.Remove(uint.Parse(r.QueryString["id"])))
+                return HttpResponse.Ok;
+            return HttpResponse.Forbidden;
         }
 
         //身份验证↓
@@ -323,5 +296,157 @@ namespace WebApi.Logic.Article
             sb.Append(timeStamp.ToString());
             return sb.ToString();
         }
+
+        //Cache callbacks↓
+
+        private void LoadAllToCache()
+        {
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+                 ConfigLoadingManager.GetInstance()
+                 .GetConfig().Database.GetConnectionString()))
+            {
+                var query = from p in db.GetTable<ArticleTable>()
+                            select p;
+                foreach (var p in query)
+                {
+                    var article = JsonConvert.DeserializeObject<ArticleInfo>(p.Info);
+                    article.Id = p.Id;
+                    article.Time = (long)p.Time;
+                    this.ArticleCache.Memory.TryAdd(article.Id, article);
+                }
+            }
+        }
+
+        private void WriteMemoryToDb()
+        {
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+            ConfigLoadingManager.GetInstance()
+            .GetConfig().Database.GetConnectionString()))
+            {
+                try
+                {
+                    db.BeginTransaction(IsolationLevel.Serializable);
+                    foreach (var p in ArticleCache.Memory.Values)
+                        db.InsertOrReplace(new ArticleTable
+                        {
+                            Id = p.Id,
+                            Time = (ulong)p.Time,
+                            Info = JsonConvert.SerializeObject(p)
+                        });
+                }
+                finally
+                {
+                    db.CommitTransaction();
+                }
+            }
+        }
+
+        static private void AddToSource(uint articleId, ArticleInfo articleInfo)
+        {
+            var newDbElement = new ArticleTable
+            {
+                Id = articleInfo.Id,
+                Time = (ulong)articleInfo.Time,
+                Info = JsonConvert.SerializeObject(articleInfo)
+            };
+
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+            ConfigLoadingManager.GetInstance()
+            .GetConfig().Database.GetConnectionString()))
+            {
+                try
+                {
+                    db.BeginTransaction(IsolationLevel.Serializable);
+
+                    var query = (from p in db.GetTable<ArticleTable>()
+                                 where p.Id == newDbElement.Id
+                                 select p);
+                    var isExists = query.Count() != 0;
+                    if (isExists)
+                        return;
+                    db.InsertOrReplace(newDbElement);
+                }
+                finally
+                {
+                    db.CommitTransaction();
+                }
+            }
+        }
+
+        static private void RemoveFromSource(uint articleId)
+        {
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+                            ConfigLoadingManager.GetInstance()
+                            .GetConfig().Database.GetConnectionString()))
+            {
+                db.Delete(new ArticleTable { Id = (uint)articleId });
+            }
+        }
+
+        static private ArticleInfo GetFromSource(uint articleId)
+        {
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+                 ConfigLoadingManager.GetInstance()
+                 .GetConfig().Database.GetConnectionString()))
+            {
+                var query = from p in db.GetTable<ArticleTable>()
+                            where p.Id == articleId
+                            select p;
+                if (query.Count() == 0)
+                    return null;
+
+                var columns = query.First();
+                var article = JsonConvert.DeserializeObject<ArticleInfo>(columns.Info);
+                article.Id = columns.Id;
+                article.Time = (long)columns.Time;
+                return article;
+            }
+        }
+
+        static private void UpdateToSource(uint articleId, ArticleInfo articleInfo)
+        {
+            var newDbElement = new ArticleTable
+            {
+                Id = articleInfo.Id,
+                Time = (ulong)articleInfo.Time,
+                Info = JsonConvert.SerializeObject(articleInfo)
+            };
+
+            using (DataConnection db = MySqlTools.CreateDataConnection(
+            ConfigLoadingManager.GetInstance()
+            .GetConfig().Database.GetConnectionString()))
+            {
+                try
+                {
+                    db.BeginTransaction(IsolationLevel.Serializable);
+
+                    var query = (from p in db.GetTable<ArticleTable>()
+                                 where p.Id == newDbElement.Id
+                                 select p);
+                    var isExists = query.Count() != 0;
+                    if (!isExists)
+                        return;
+                    db.InsertOrReplace(newDbElement);
+                }
+                finally
+                {
+                    db.CommitTransaction();
+                }
+            }
+        }
+
+        //fields
+
+        readonly private MemoryCache<uint, ArticleInfo> ArticleCache =
+         new MemoryCache<uint, ArticleInfo>
+         {
+             addToSource = AddToSource,
+             removeFromSource = RemoveFromSource,
+             getFromSource = GetFromSource,
+             updateToSource = UpdateToSource
+         };
+        private static readonly Lazy<ArticleHandler> Lazy =
+               new Lazy<ArticleHandler>(() => new ArticleHandler());
+
     }
 }

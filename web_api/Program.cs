@@ -33,8 +33,8 @@ namespace WebApi
             var config = ConfigLoadingManager.GetInstance().GetConfig();
 
             SortedDictionary<string, RouteHandler> routeHandlers = new SortedDictionary<string, RouteHandler>();
-            routeHandlers.Add("/article/latest", new ArticleHandler());
-            routeHandlers.Add("/article", new ArticleHandler());
+            routeHandlers.Add("/article/latest", ArticleHandler.GetInstance());
+            routeHandlers.Add("/article", ArticleHandler.GetInstance());
 
             ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers };
 
@@ -65,10 +65,14 @@ namespace WebApi
             Console.WriteLine("press any key to shut down...");
             Console.ReadKey();
 
+            //stop dispatcher
             if (httpDispatcher != null)
                 httpDispatcher.Stop();
             if (httpsDispatcher != null)
                 httpsDispatcher.Stop();
+
+            //stop logic
+            ArticleHandler.GetInstance().Stop();
 
             LogManager.GetInstance().LogAsync("stopped");
             LogManager.GetInstance().Stop();
