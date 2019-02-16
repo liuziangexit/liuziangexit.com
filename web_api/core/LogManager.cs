@@ -17,7 +17,7 @@ using WebApi.Core;
  * 
  */
 
-namespace GameDbCache
+namespace WebApi.Core
 {
     class LogManager
     {

@@ -18,7 +18,7 @@ using System.Threading.Tasks;
  * 
  */
 
-namespace GameDbCache
+namespace WebApi.Core
 {
     sealed class FixedThreadPool
     {

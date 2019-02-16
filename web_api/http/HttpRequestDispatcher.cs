@@ -1,5 +1,4 @@
-﻿using GameDbCache;
-using HttpMachine;
+﻿using HttpMachine;
 using System;
 using System.IO;
 using System.Collections.Concurrent;
@@ -11,6 +10,7 @@ using System.Threading;
 using WebApi.Http.Struct;
 using WebApi.Http.Handler;
 using System.Collections.Generic;
+using WebApi.Core;
 
 /** 
  * @author  liuziang

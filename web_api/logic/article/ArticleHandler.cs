@@ -11,7 +11,6 @@ using WebApi.Logic.Article.Struct;
 using System.Net.Http;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
-using GameDbCache;
 using static WebApi.Logic.VerificationHelper;
 using System.Data;
 

@@ -1,8 +1,8 @@
-﻿using GameDbCache;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using WebApi.Core;
 using WebApi.Http.Struct;
 using WebApi.Util;
 
