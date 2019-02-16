@@ -1,0 +1,22 @@
+{
+  "http_listen_address": "127.0.0.1:8080",
+  "https_listen_address": "127.0.0.1:8082",
+  "https_pfx_certificate": "/Users/liuziang/Documents/GitHub/Practice/server-passwordis-password.pfx",
+  "https_pfx_certificate_password": "password",
+  "session_read_buffer_size": 4096,
+  "session_no_action_timeout": 10,
+  "exception_log_file": "exception_log.txt",
+  "access_log_file": "access_log.txt",
+  "verification_certificate": "/Users/liuziang/Documents/GitHub/Practice/server-passwordis-password.pfx",
+  "verification_certificate_password": "password",
+  "max_allowed_stamp_difference": 10,
+  "database": {
+    "ip": "127.0.0.1",
+    "port": "3306",
+    "username": "root",
+    "password": "password",
+    "database": "web",
+    "sql_ca_certificate": null,
+    "sql_ssl_mode": "None"
+  }
+}
