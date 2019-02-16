@@ -13,18 +13,14 @@ namespace WebApi
     {
         static void Main(string[] args)
         {
-            while (true)
+            try
             {
-                try
-                {
-                    RunServer();
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message + Environment.NewLine + ex.StackTrace);
-                    LogManager.GetInstance().LogAsync(ex);
-                }
+                RunServer();
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.WriteAllText("crash_log.txt",
+                ex.Message + Environment.NewLine + ex.StackTrace + Environment.NewLine + Environment.NewLine);
             }
         }
 
@@ -36,7 +32,10 @@ namespace WebApi
             routeHandlers.Add("/article/latest", ArticleHandler.GetInstance());
             routeHandlers.Add("/article", ArticleHandler.GetInstance());
 
-            ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers };
+            LogManager exceptionLogger = new LogManager(ConfigLoadingManager.GetInstance().GetConfig().ExceptionLogFile);
+            LogManager accessLogger = new LogManager(ConfigLoadingManager.GetInstance().GetConfig().AccessLogFile);
+
+            ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers, ExceptionLogger = exceptionLogger, AccessLogger = accessLogger };
 
             HttpRequestDispatcher httpDispatcher = null;
             HttpRequestDispatcher httpsDispatcher = null;
@@ -46,7 +45,8 @@ namespace WebApi
                 httpDispatcher = new HttpRequestDispatcher();
                 httpDispatcher.Start(config.HttpListenAddress.IP, config.HttpListenAddress.Port,
                  config.SessionReadBufferSize, config.SessionNoActionTimeout,
-                 executeRouteHandler.HttpRequestHandler, executeRouteHandler.InternalServerError);
+                 executeRouteHandler.HttpRequestHandler, executeRouteHandler.InternalServerError,
+                 exceptionLogger);
                 Console.WriteLine("Http Server - " + Environment.NewLine + config.HttpListenAddress.IP + ":" + config.HttpListenAddress.Port);
             }
             if (config.HttpsListenAddress.IsAvailable())
@@ -55,13 +55,14 @@ namespace WebApi
                 httpsDispatcher.Start(config.HttpsListenAddress.IP, config.HttpsListenAddress.Port,
                  config.SessionReadBufferSize, config.SessionNoActionTimeout,
                   new X509Certificate2(config.HttpsPfxCertificate, config.HttpsPfxCertificatePassword),
-                 executeRouteHandler.HttpRequestHandler, executeRouteHandler.InternalServerError);
+                 executeRouteHandler.HttpRequestHandler, executeRouteHandler.InternalServerError,
+                 exceptionLogger);
                 Console.WriteLine("Https Server - " + Environment.NewLine + config.HttpsListenAddress.IP + ":" + config.HttpsListenAddress.Port);
             }
             if (httpDispatcher == null && httpsDispatcher == null)
                 return;
-            LogManager.GetInstance().LogAsync("startup successfully");
 
+            exceptionLogger.LogAsync("startup successfully");
             Console.WriteLine("press any key to shut down...");
             Console.ReadKey();
 
@@ -74,8 +75,11 @@ namespace WebApi
             //stop logic
             ArticleHandler.GetInstance().Stop();
 
-            LogManager.GetInstance().LogAsync("stopped");
-            LogManager.GetInstance().Stop();
+            exceptionLogger.LogAsync("stopped");
+
+            //stop logger
+            exceptionLogger.Stop();
+            accessLogger.Stop();
         }
     }
 }

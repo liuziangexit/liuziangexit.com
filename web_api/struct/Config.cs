@@ -40,8 +40,12 @@ namespace WebApi.Struct
         public uint SessionNoActionTimeout { get; set; }
 
         //日志路径
-        [JsonProperty("log_file")]
-        public string LogFile { get; set; }
+        [JsonProperty("exception_log_file")]
+        public string ExceptionLogFile { get; set; }
+
+        //日志路径
+        [JsonProperty("access_log_file")]
+        public string AccessLogFile { get; set; }
 
         //用于身份验证
         //pfx证书路径，不要求包含私钥

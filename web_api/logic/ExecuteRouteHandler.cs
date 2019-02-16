@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using WebApi.Core;
+using WebApi.Http;
 using WebApi.Http.Struct;
 using WebApi.Util;
 
@@ -35,9 +36,16 @@ namespace WebApi.Logic
             }
             catch (Exception ex)
             {
-                LogManager.GetInstance().LogAsync(ex);
+                ExceptionLogger.LogAsync(ex);
                 return AddHeader(HttpResponse.InternalServerError);
             }
+
+            if (r.QueryString != null && r.QueryString.Count != 0)
+                AccessLogger.LogAsync(r.Method + " " + r.Path + "?" + QueryStringBuilder.CreateQueryStringFromMap(r.QueryString).ToString()
+                + Environment.NewLine + responseProducedByLogicHandler.StatusCode);
+            else
+                AccessLogger.LogAsync(r.Method + " " + r.Path
+               + Environment.NewLine + responseProducedByLogicHandler.StatusCode);
 
             return AddHeader(responseProducedByLogicHandler);
         }
@@ -66,5 +74,7 @@ namespace WebApi.Logic
         }
 
         public SortedDictionary<string, RouteHandler> RouteHandlers;
+        public LogManager ExceptionLogger;
+        public LogManager AccessLogger;
     }
 }

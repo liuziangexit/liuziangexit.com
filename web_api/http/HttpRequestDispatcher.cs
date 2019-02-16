@@ -32,12 +32,12 @@ namespace WebApi.Http
 
         public delegate HttpResponse ResponseMaker();
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, HttpRequestProcessor httpRequestHandler, ResponseMaker internalServerError)
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, HttpRequestProcessor httpRequestHandler, ResponseMaker internalServerError, LogManager logger)
         {
-            this.Start(ip, port, readBufferSize, timeout, null, httpRequestHandler, internalServerError);
+            this.Start(ip, port, readBufferSize, timeout, null, httpRequestHandler, internalServerError, logger);
         }
 
-        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate2 certificate, HttpRequestProcessor httpRequestHandler, ResponseMaker internalServerError)
+        public void Start(string ip, UInt16 port, uint readBufferSize, uint timeout, X509Certificate2 certificate, HttpRequestProcessor httpRequestHandler, ResponseMaker internalServerError, LogManager logger)
         {
             if (ConnectionAcceptor == null)
                 ConnectionAcceptor = new TcpListener(IPAddress.Parse(ip), port);
@@ -50,6 +50,7 @@ namespace WebApi.Http
             this.HttpRequestHandler = httpRequestHandler;
             this.GetInternalServerError = internalServerError;
             this.Certificate = certificate;
+            this.Logger = logger;
 
             ConnectionAcceptor.Start();
             ConnectionAcceptor.BeginAcceptTcpClient(new AsyncCallback(OnAccept), this.ConnectionAcceptor);
@@ -76,7 +77,7 @@ namespace WebApi.Http
             }
             catch (SocketException ex)
             {
-                LogManager.GetInstance().LogAsync(ex);
+                Logger.LogAsync(ex);
                 return;
             }
             catch (ObjectDisposedException)
@@ -99,7 +100,7 @@ namespace WebApi.Http
                 {
                     //ssl handshake failed, close tcp connection
                     sslStream.Close();
-                    LogManager.GetInstance().LogAsync(ex);
+                    Logger.LogAsync(ex);
                     return;
                 }
                 //handshake successful
@@ -150,7 +151,7 @@ namespace WebApi.Http
             catch (Exception ex)
             {
                 CloseSession(session);
-                LogManager.GetInstance().LogAsync(ex);
+                Logger.LogAsync(ex);
             }
         }
 
@@ -170,7 +171,7 @@ namespace WebApi.Http
             catch (Exception ex)
             {
                 //io exception, session will be closed by the if section blow
-                LogManager.GetInstance().LogAsync(ex);
+                Logger.LogAsync(ex);
             }
 
             if (bytesTransferred == 0)
@@ -214,7 +215,7 @@ namespace WebApi.Http
                 {
                     //logic error
                     responses.Enqueue(GetInternalServerError());
-                    LogManager.GetInstance().LogAsync(ex);
+                    Logger.LogAsync(ex);
                 }
             }
 
@@ -239,7 +240,7 @@ namespace WebApi.Http
             catch (Exception ex)
             {
                 CloseSession(session);
-                LogManager.GetInstance().LogAsync(ex);
+                Logger.LogAsync(ex);
                 return;
             }
         }
@@ -265,6 +266,7 @@ namespace WebApi.Http
         private X509Certificate2 Certificate;
         private TcpListener ConnectionAcceptor;
         private ConcurrentDictionary<UInt64, Session> Sessions;
+        private LogManager Logger;
 
     }
 }

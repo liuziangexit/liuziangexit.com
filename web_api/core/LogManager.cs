@@ -21,19 +21,18 @@ namespace WebApi.Core
 {
     class LogManager
     {
-        LogManager()
+        public LogManager(string log)
         {
             tp = new FixedThreadPool(1);
+            logfile = log;
         }
-
-        static public LogManager GetInstance() => Lazy.Value;
 
         public void LogAsync(string content)
         {
             var now = DateTime.Now;
             tp.Async(() =>
             {
-                File.AppendAllText(ConfigLoadingManager.GetInstance().GetConfig().LogFile,
+                File.AppendAllText(this.logfile,
                 now.ToString() + Environment.NewLine + content + Environment.NewLine + Environment.NewLine,
                 Encoding.UTF8);
             });
@@ -44,7 +43,7 @@ namespace WebApi.Core
             var now = DateTime.Now;
             tp.Async(() =>
             {
-                File.AppendAllText(ConfigLoadingManager.GetInstance().GetConfig().LogFile,
+                File.AppendAllText(this.logfile,
                 now.ToString() + Environment.NewLine + ex.Message + Environment.NewLine + ex.StackTrace + Environment.NewLine + Environment.NewLine,
                 Encoding.UTF8);
             });
@@ -55,8 +54,7 @@ namespace WebApi.Core
             this.tp.Stop();
         }
 
+        private string logfile;
         private FixedThreadPool tp;
-        private static readonly Lazy<LogManager> Lazy =
-                new Lazy<LogManager>(() => new LogManager());
     }
 }

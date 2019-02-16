@@ -330,3 +330,5 @@ ASALocalRun/
 .mfractor/
 web_api/log.txt
 web_api/config.json
+web_api/access_log.txt
+web_api/exception_log.txt
