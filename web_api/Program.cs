@@ -32,10 +32,13 @@ namespace WebApi
             routeHandlers.Add("/article/latest", ArticleHandler.GetInstance());
             routeHandlers.Add("/article", ArticleHandler.GetInstance());
 
+            SortedList<string, RouteHandler> regexRouteHandlers = new SortedList<string, RouteHandler>();
+            regexRouteHandlers.Add("/article/\\d$", ArticleHandler.GetInstance());
+
             LogManager exceptionLogger = new LogManager(ConfigLoadingManager.GetInstance().GetConfig().ExceptionLogFile);
             LogManager accessLogger = new LogManager(ConfigLoadingManager.GetInstance().GetConfig().AccessLogFile);
 
-            ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers, ExceptionLogger = exceptionLogger, AccessLogger = accessLogger };
+            ExecuteRouteHandler executeRouteHandler = new ExecuteRouteHandler { RouteHandlers = routeHandlers, RegexRouteHandlers = regexRouteHandlers, ExceptionLogger = exceptionLogger, AccessLogger = accessLogger };
 
             HttpRequestDispatcher httpDispatcher = null;
             HttpRequestDispatcher httpsDispatcher = null;

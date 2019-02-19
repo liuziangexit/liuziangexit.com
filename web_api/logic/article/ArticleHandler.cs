@@ -110,43 +110,34 @@ namespace WebApi.Logic.Article
 
         public HttpResponse OnRequest(HttpRequest r)
         {
-            switch (r.Path)
+            if (r.Path == "/article/latest" && r.Method == HttpMethod.Get)
+                return GetLatest(r);
+
+            if (r.Path.StartsWith("/article"))
             {
-                case "/article/latest":
-                    {
-                        if (r.Method != HttpMethod.Get)
-                            return HttpResponse.NotImplemented;
-                        return GetLatest(r);
-                    }
-                case "/article":
-                    {
-                        if (r.Method == HttpMethod.Get)
-                            return GetSingle(r);
+                if (r.Method == HttpMethod.Get)
+                    return GetSingle(r);
 
-                        if (r.Method == HttpMethod.Post)
-                        {
-                            var verificationCertificate = new X509Certificate2(ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificate,
-                                                                ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificatePassword);
-                            string action;
-                            if (!r.QueryString.TryGetValue("action", out action))
-                                return HttpResponse.BadRequest;
-                            switch (action)
-                            {
-                                case "new":
-                                    return NewOrReplaceArticle(r, verificationCertificate, false);
-                                case "replace":
-                                    return NewOrReplaceArticle(r, verificationCertificate, true);
-                                case "delete":
-                                    return DeleteArticle(r, verificationCertificate);
-                            }
-                            return HttpResponse.NotImplemented;
-                        }
-
-                        return HttpResponse.NotImplemented;
+                if (r.Method == HttpMethod.Post && r.Path == "/article")
+                {
+                    var verificationCertificate = new X509Certificate2(ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificate,
+                                                        ConfigLoadingManager.GetInstance().GetConfig().VerificationCertificatePassword);
+                    string action;
+                    if (!r.QueryString.TryGetValue("action", out action))
+                        return HttpResponse.BadRequest;
+                    switch (action)
+                    {
+                        case "new":
+                            return NewOrReplaceArticle(r, verificationCertificate, false);
+                        case "replace":
+                            return NewOrReplaceArticle(r, verificationCertificate, true);
+                        case "delete":
+                            return DeleteArticle(r, verificationCertificate);
                     }
+                }
             }
-            //never happen
-            throw new Exception();
+
+            return HttpResponse.BadRequest;
         }
 
         public void Stop()
@@ -188,10 +179,14 @@ namespace WebApi.Logic.Article
 
         private HttpResponse GetSingle(HttpRequest r)
         {
-            if (r.QueryString == null && !r.QueryString.ContainsKey("id"))
+            uint findMe = 0;
+
+            var lastSlash = r.Path.LastIndexOf('/');
+            if (lastSlash == -1)
+                return HttpResponse.BadRequest;
+            if (!uint.TryParse(r.Path.Substring(lastSlash + 1), out findMe))
                 return HttpResponse.BadRequest;
 
-            uint findMe = uint.Parse(r.QueryString["id"]);
             ArticleInfo result = null;
             if (!ArticleCache.Memory.TryGetValue(findMe, out result))
                 return HttpResponse.NotFound;

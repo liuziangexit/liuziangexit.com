@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using WebApi.Core;
 using WebApi.Http;
 using WebApi.Http.Struct;
@@ -27,6 +28,21 @@ namespace WebApi.Logic
 
             RouteHandler handler = null;
             if (RouteHandlers == null || !RouteHandlers.TryGetValue(r.Path, out handler))
+            {
+                if (RegexRouteHandlers != null)
+                {
+                    foreach (var pattern in RegexRouteHandlers.Keys)
+                    {
+                        if (Regex.Match(r.Path, pattern).Success)
+                        {
+                            handler = RegexRouteHandlers[pattern];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (handler == null)
                 return AddHeader(HttpResponse.NotFound);
 
             HttpResponse responseProducedByLogicHandler = null;
@@ -74,6 +90,7 @@ namespace WebApi.Logic
         }
 
         public SortedDictionary<string, RouteHandler> RouteHandlers;
+        public SortedList<string, RouteHandler> RegexRouteHandlers;
         public LogManager ExceptionLogger;
         public LogManager AccessLogger;
     }
