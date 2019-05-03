@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using WebApi.Core;
 using WebApi.Http;
 using WebApi.Http.Struct;
 using WebApi.Logic;
 using WebApi.Logic.Article;
+
+using WebSocketSharp;
+using WebSocketSharp.Server;
 
 namespace WebApi
 {
@@ -65,9 +70,24 @@ namespace WebApi
             if (httpDispatcher == null && httpsDispatcher == null)
                 return;
 
+            //start websocket server for demonstration purpose
+            //20190503
+            var wssv = new WebSocketServer(IPAddress.Parse(config.WsListenAddress.IP), config.WsListenAddress.Port, false);
+            wssv.AddWebSocketService<WebSocketService>("/wsdemo");
+            wssv.Start();
+            Console.WriteLine("Ws Server - " + Environment.NewLine + config.WsListenAddress.IP + ":" + config.WsListenAddress.Port);
+
+            var wsssv = new WebSocketServer(IPAddress.Parse(config.WssListenAddress.IP), config.WssListenAddress.Port, true);
+            wsssv.AddWebSocketService<WebSocketService>("/wsdemo");
+            wsssv.SslConfiguration.ServerCertificate = new X509Certificate2(config.HttpsPfxCertificate, config.HttpsPfxCertificatePassword);
+            wsssv.Start();
+            Console.WriteLine("Wss Server - " + Environment.NewLine + config.WssListenAddress.IP + ":" + config.WssListenAddress.Port);
+
             exceptionLogger.LogAsync("startup successfully");
             Console.WriteLine("press any key to shut down...");
             Console.ReadKey();
+            wssv.Stop();
+            wsssv.Stop();
 
             //stop dispatcher
             if (httpDispatcher != null)

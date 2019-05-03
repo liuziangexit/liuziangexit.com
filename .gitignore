@@ -331,3 +331,4 @@ ASALocalRun/
 web_api/log.txt
 web_api/access_log.txt
 web_api/exception_log.txt
+web_api/crash_log.txt
