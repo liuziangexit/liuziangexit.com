@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using WebApi.Core;
 using WebApi.Http;
 using WebApi.Http.Struct;
-using WebApi.Util;
 
 /** 
  * @author  liuziang
@@ -23,7 +21,10 @@ namespace WebApi.Logic
     {
         public HttpResponse HttpRequestHandler(HttpRequest r)
         {
-            if (r.Path.EndsWith('/'))
+            if (r == null)
+                throw new Exception("20200111 incoming r is null!!!");
+
+            if (r.Path.Length > 1 && r.Path.EndsWith('/'))
                 r.Path = r.Path.Remove(r.Path.Length - 1);
 
             RouteHandler handler = null;

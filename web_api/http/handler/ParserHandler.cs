@@ -90,6 +90,11 @@ namespace WebApi.Http.Handler
 
         public void OnMessageEnd(HttpParser parser)
         {
+            //performs some check
+            if (String.IsNullOrEmpty(CurrentRequest.Path) || String.IsNullOrWhiteSpace(CurrentRequest.Path))
+                return;
+            if (CurrentRequest.Method == null)
+                return;
             Requests.Enqueue(CurrentRequest);
         }
 
