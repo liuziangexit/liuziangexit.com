@@ -63,6 +63,8 @@ namespace WebApi.Http
                 CloseSession(session);
         }
 
+        public int SessionCount { get { return this.Sessions.Count; } }
+
         //implementation
 
         private async void OnAccept(IAsyncResult ar)

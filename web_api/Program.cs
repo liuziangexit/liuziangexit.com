@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using WebApi.Core;
 using WebApi.Http;
 using WebApi.Http.Struct;
@@ -66,8 +67,34 @@ namespace WebApi
                 return;
 
             exceptionLogger.LogAsync("startup successfully");
+
+            bool stopFlag = false;
+            object mut = new object();
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    lock (mut)
+                    {
+                        if (stopFlag)
+                            return;
+                        Monitor.Wait(mut, 5000);
+                        if (stopFlag)
+                            return;
+                    }
+                    Console.Clear();
+                    Console.WriteLine("Active Session: " + (httpDispatcher.SessionCount + httpsDispatcher.SessionCount).ToString());
+                }
+            }).Start();
+
             Console.WriteLine("press any key to shut down...");
             Console.ReadKey();
+
+            lock (mut)
+            {
+                stopFlag = true;
+                Monitor.Pulse(mut);
+            }
 
             //stop dispatcher
             if (httpDispatcher != null)
