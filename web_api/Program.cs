@@ -78,7 +78,7 @@ namespace WebApi
                 while (true)
                 {
                     Console.Clear();
-                    Console.WriteLine("Active Session: " + (httpDispatcher.SessionCount + httpsDispatcher.SessionCount).ToString());
+                    Console.Write("Active Session: " + (httpDispatcher.SessionCount + httpsDispatcher.SessionCount).ToString());
                     lock (mut)
                     {
                         for (int i = 0; i < second; i++)
