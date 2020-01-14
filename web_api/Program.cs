@@ -70,20 +70,27 @@ namespace WebApi
 
             bool stopFlag = false;
             object mut = new object();
+
             new Thread(() =>
             {
+                const int second = 5;
+                Thread.Sleep(second * 1000);
                 while (true)
                 {
-                    lock (mut)
-                    {
-                        if (stopFlag)
-                            return;
-                        Monitor.Wait(mut, 5000);
-                        if (stopFlag)
-                            return;
-                    }
                     Console.Clear();
                     Console.WriteLine("Active Session: " + (httpDispatcher.SessionCount + httpsDispatcher.SessionCount).ToString());
+                    lock (mut)
+                    {
+                        for (int i = 0; i < second; i++)
+                        {
+                            if (stopFlag)
+                                return;
+                            Console.Write('.');
+                            Monitor.Wait(mut, 1000);
+                            if (stopFlag)
+                                return;
+                        }
+                    }
                 }
             }).Start();
 
