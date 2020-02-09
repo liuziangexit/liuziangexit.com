@@ -34,7 +34,7 @@ namespace WebApi
             routeHandlers.Add("/article", ArticleHandler.GetInstance());
 
             SortedList<string, RouteHandler> regexRouteHandlers = new SortedList<string, RouteHandler>();
-            regexRouteHandlers.Add("/article/\\d$", ArticleHandler.GetInstance());
+            regexRouteHandlers.Add(@"\/article\/\d+$", ArticleHandler.GetInstance());
 
             LogManager exceptionLogger = new LogManager(ConfigLoadingManager.GetInstance().GetConfig().ExceptionLogFile);
             LogManager accessLogger = new LogManager(ConfigLoadingManager.GetInstance().GetConfig().AccessLogFile);
