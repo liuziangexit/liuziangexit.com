@@ -197,7 +197,18 @@ namespace WebApi.Http
             }
 
             //parse http request(s)
-            if (session.HttpState.Execute(new ArraySegment<byte>(session.ReadBuffer, 0, bytesTransferred)) != bytesTransferred)
+            int bytesParsed = 0;
+            try
+            {
+                bytesParsed = session.HttpState.Execute(new ArraySegment<byte>(session.ReadBuffer, 0, bytesTransferred));
+            }
+            catch (Exception ex)
+            {
+                //parsing error
+                CloseSession(session);
+                return;
+            }
+            if (bytesParsed != bytesTransferred)
             {
                 //parsing error
                 CloseSession(session);
