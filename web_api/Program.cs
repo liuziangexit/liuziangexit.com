@@ -7,6 +7,7 @@ using WebApi.Http;
 using WebApi.Http.Struct;
 using WebApi.Logic;
 using WebApi.Logic.Article;
+using WebApi.Logic.Interpreter;
 
 namespace WebApi
 {
@@ -32,6 +33,7 @@ namespace WebApi
             SortedDictionary<string, RouteHandler> routeHandlers = new SortedDictionary<string, RouteHandler>();
             routeHandlers.Add("/article/latest", ArticleHandler.GetInstance());
             routeHandlers.Add("/article", ArticleHandler.GetInstance());
+            routeHandlers.Add("/interpreter", InterpreterHandler.GetInstance());
 
             SortedList<string, RouteHandler> regexRouteHandlers = new SortedList<string, RouteHandler>();
             regexRouteHandlers.Add(@"\/article\/\d+$", ArticleHandler.GetInstance());

@@ -64,6 +64,9 @@ namespace WebApi.Struct
 
         [JsonProperty("database")]
         public DbConfig Database { get; set; }
+
+        [JsonProperty("compilerPort")]
+        public int CompilerPort { get; set; }
     }
 
     struct DbConfig

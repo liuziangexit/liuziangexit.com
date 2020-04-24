@@ -18,5 +18,6 @@
     "database": "web",
     "sql_ca_certificate": null,
     "sql_ssl_mode": "None"
-  }
+  },
+  "compilerPort": 9977
 }
