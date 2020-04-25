@@ -1,20 +1,11 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using LinqToDB;
-using LinqToDB.Data;
-using LinqToDB.DataProvider.MySql;
-using Newtonsoft.Json;
 using WebApi.Core;
 using WebApi.Http.Struct;
-using WebApi.Logic.Article.Struct;
 using System.Net.Http;
 using System.Text;
-using System.Security.Cryptography.X509Certificates;
-using static WebApi.Logic.VerificationHelper;
-using System.Data;
 using System.Net.Sockets;
 using System.Net;
+using System.Collections.Generic;
 
 /** 
  * @author  liuziang
@@ -38,29 +29,53 @@ namespace WebApi.Logic.Interpreter
 
         public HttpResponse OnRequest(HttpRequest r)
         {
-            return HttpResponse.BadRequest;
+            if (r.Method != HttpMethod.Post)
+            {
+                return HttpResponse.BadRequest;
+            }
+            HttpResponse httpResponse = new HttpResponse();
+            try
+            {
+                httpResponse.Body = this.sendSrcToBackend(r.Body);
+            }
+            catch (Exception)
+            {
+                this.closeConn();
+                return HttpResponse.InternalServerError;
+            }
+            httpResponse.StatusCode = 200;
+            httpResponse.Headers = new SortedList<string, string> { { "Content-Type", "text/plain" } };
+            return httpResponse;
         }
 
         public void Stop()
         {
-            this.toCompilerApi.Disconnect(true);
-            this.toCompilerApi.Close();
+            this.closeConn();
         }
 
         //↓
 
         private InterpreterHandler()
         {
-            bool v = connectToBackend();
-            this.sendMessage("var a;return a;");
-            string v1 = this.recvMessage();
-            this.GetType();
+        }
+
+        private void closeConn()
+        {
+            if (this.toCompilerApi != null)
+            {
+                if (this.toCompilerApi.Connected)
+                    this.toCompilerApi.Disconnect(true);
+                this.toCompilerApi.Close();
+                this.toCompilerApi = null;
+            }
         }
 
         private bool connectToBackend()
         {
             try
             {
+                this.closeConn();
+                this.toCompilerApi = new Socket(SocketType.Stream, ProtocolType.Tcp);
                 this.toCompilerApi.Connect(IPAddress.Parse("127.0.0.1"), ConfigLoadingManager.GetInstance().GetConfig().CompilerPort);
             }
             catch (SocketException)
@@ -70,17 +85,30 @@ namespace WebApi.Logic.Interpreter
             return true;
         }
 
-        private string sendToBackend(string source)
+        private string sendSrcToBackend(string source)
         {
-            if (!this.toCompilerApi.Connected)
+            if (this.toCompilerApi == null || !this.toCompilerApi.Connected || !this.testConn())
             {
                 if (!this.connectToBackend())
-                    return "liuziangexit.com无法连接到编译器";
+                    return "无法连接到编译器";
             }
             //send request
             this.sendMessage(source);
             //read response
             return this.recvMessage();
+        }
+
+        private bool testConn()
+        {
+            try
+            {
+                this.sendMessage("test");
+                return this.recvMessage() == "test";
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private void sendMessage(String str)
@@ -133,7 +161,7 @@ namespace WebApi.Logic.Interpreter
         }
 
         //fields
-        private Socket toCompilerApi = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        private Socket toCompilerApi = null;
 
         private static readonly Lazy<InterpreterHandler> Lazy =
                new Lazy<InterpreterHandler>(() => new InterpreterHandler());
